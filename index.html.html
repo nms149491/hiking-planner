@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>登山行程估算器 · 上河時間</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+     background:#eef2ee;color:#1f2a23;}
+header{background:#2f5d3f;color:#fff;padding:10px 18px;display:flex;flex-wrap:wrap;gap:14px;
+       align-items:center;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+header h1{font-size:17px;margin:0;font-weight:600;white-space:nowrap;margin-right:auto;}
+.header-btn{background:#fff;color:#2f5d3f;border:1px solid #fff;font-weight:700;
+            padding:6px 14px;font-size:13px;}
+.header-btn:hover{background:#e8f0e9;}
+button{cursor:pointer;font-family:inherit;font-size:12px;border-radius:6px;border:1px solid #cdd8cf;
+       background:#fff;color:#2f5d3f;padding:4px 8px;transition:.15s;}
+button:hover{background:#e8f0e9;}
+button:active{transform:scale(.97);}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+
+main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-items:start;max-width:1400px;margin:0 auto;}
+@media(max-width:1000px){main{grid-template-columns:1fr;}}
+
+.panel{background:#fff;border-radius:12px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:14px;overflow:hidden;}
+.panel-header{padding:14px;border-bottom:1px solid #eef2ee;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.panel-header h2{font-size:14px;margin:0;color:#2f5d3f;letter-spacing:.06em;font-weight:700;}
+.panel-header .icon{font-size:12px;color:#7d8f84;transition:transform .2s;}
+.panel[open] .panel-header .icon{transform:rotate(180deg);}
+.panel-content{padding:14px;}
+.panel-fixed{padding:14px;}
+
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.empty{color:#9aa8a0;font-size:13px;text-align:center;padding:16px 0;line-height:1.6;}
+.muted{color:#8d9c93;font-weight:400;}
+
+/* ── 路段庫 ── */
+.lib-form{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
+.lib-form input{padding:6px 8px;border:1px solid #d3ddd5;border-radius:6px;font-size:13px;
+                width:100%;font-family:inherit;}
+.lib-form button{grid-column:1/-1;padding:7px;font-weight:600;background:#2f5d3f;color:#fff;border-color:#2f5d3f;}
+.lib-form button:hover{background:#3d7452;}
+.file-bar{display:flex;gap:8px;margin-bottom:6px;}
+.file-bar button{flex:1;padding:6px;}
+.lib-ref{font-size:12px;color:#5c7a66;margin-bottom:12px;display:block;}
+.lib-ref a{color:#2f5d3f;text-decoration:none;font-weight:600;}
+.lib-ref a:hover{text-decoration:underline;}
+.search-box{width:100%;padding:8px 12px;border:1px solid #d3ddd5;border-radius:8px;
+            font-size:13px;margin-bottom:10px;font-family:inherit;background:#fafcfa;}
+.search-box:focus{outline:none;border-color:#2f5d3f;}
+.lib-group{border:1px solid #e2e9e3;border-radius:9px;overflow:hidden;margin-bottom:8px;}
+.lib-group > summary{font-weight:700;font-size:13px;padding:9px 12px;cursor:pointer;
+                     background:#f4f7f5;display:flex;align-items:center;list-style:none;outline:none;}
+.lib-group > summary::-webkit-details-marker{display:none;}
+.lib-group > summary::before{content:'▶';font-size:9px;color:#7d8f84;margin-right:8px;transition:transform .2s;}
+.lib-group[open] > summary::before{transform:rotate(90deg);}
+.lib-group > summary:hover{background:#eef4ef;}
+.group-count{font-size:11px;background:#e2e9e3;color:#5c7a66;padding:1px 6px;border-radius:10px;margin-left:auto;}
+.lib-items-wrap{padding:8px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #e2e9e3;background:#fff;}
+.lib-item{border:1px solid #f0f4f0;border-radius:7px;padding:8px 10px;background:#fafcfa;}
+.lib-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.lib-name{font-size:13px;font-weight:600;}
+.lib-time{font-size:11.5px;color:#5c7a66;margin-top:2px;}
+.x{border:none;background:transparent;color:#b3bfb7;padding:0 4px;font-size:14px;cursor:pointer;}
+.x:hover{color:#d9534f;background:transparent;}
+.lib-msg{font-size:12px;color:#2f5d3f;margin-bottom:8px;text-align:center;display:none;background:#eef4ef;padding:6px;border-radius:6px;}
+
+/* ── 控制區 ── */
+.speed-bar{margin-bottom:14px; display:flex; align-items:center; gap:10px; background:#f4f7f5; padding:10px; border-radius:8px; flex-wrap:wrap;}
+.speed-bar label{font-size:13px; font-weight:700; color:#2f5d3f;}
+.speed-bar input{padding:4px 8px;border:1px solid #cdd8cf;border-radius:6px;font-size:14px;width:74px;font-family:inherit;}
+.speed-bar .hint{font-size:12px;color:#7d8f84;}
+
+.dest-panel{background:#eef4ef;border-radius:8px;padding:12px;margin-bottom:14px;}
+.dest-panel label{display:block;font-size:13px;font-weight:700;color:#2f5d3f;margin-bottom:8px;}
+.dest-row{display:flex;gap:8px;margin-bottom:8px;}
+.dest-row:last-child{margin-bottom:0;}
+.dest-select{flex:1;padding:8px 10px;border:1px solid #cdd8cf;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;}
+.search-input-wrap{display:flex;flex:1;position:relative;}
+.dest-search{width:100%;padding:8px 30px 8px 10px;border:1px solid #cdd8cf;border-radius:6px;font-size:13px;font-family:inherit;background:#fff;}
+.btn-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#b3bfb7;padding:4px;cursor:pointer;font-size:14px;}
+.btn-clear:hover{color:#d9534f;background:transparent;}
+.dest-row button[type="button"]{padding:0 14px;background:#2f5d3f;color:#fff;font-weight:600;border:none;}
+.dest-row button[type="button"]:hover{background:#3d7452;}
+.pos-box{font-size:12.5px;color:#5c7a66;margin-top:8px;}
+.pos-box b{color:#2f5d3f;font-size:14px;}
+
+.control-bar{display:flex;gap:8px;margin-bottom:14px;}
+.control-bar button{flex:1;padding:8px;font-weight:600;background:#fafcfa;border:1px solid #e2e9e3;}
+
+/* ── 訊息提示 ── */
+.msg{padding:0;font-size:13px;text-align:center;transition:.2s;}
+.msg:not(:empty){padding:8px;margin-bottom:14px;background:#e8f5e9;border-radius:6px;color:#2f5d3f;}
+
+/* ── 行程列表 ── */
+.day-group{border:1px solid #e2e9e3;border-radius:9px;overflow:hidden;margin-bottom:12px;background:#fff;}
+.day-header{padding:10px 12px;background:#f4f7f5;display:flex;justify-content:space-between;align-items:center;}
+.day-header.collapsible{cursor:pointer;}
+.day-header.collapsible::after{content:'▼';font-size:10px;color:#7d8f84;transition:transform .2s;}
+.day-group[data-open="true"] .day-header.collapsible::after{transform:rotate(180deg);}
+.day-items{padding:8px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #e2e9e3;list-style:none;margin:0;}
+.day-footer{padding:8px 12px;background:#fafcfa;font-size:11px;color:#7d8f84;text-align:right;border-top:1px dashed #e2e9e3;}
+
+.plan-item{display:grid;grid-template-columns:56px 1fr auto 56px 24px;gap:8px;align-items:center;
+           border:1px solid #e2e9e3;border-radius:8px;padding:8px 10px;background:#fafcfa;font-size:13px;transition:background .1s,border-color .1s;}
+.plan-item.seg{background:#fff;}
+.plan-item.rest{background:#fffaf0;border-color:#f0e2c4;}
+.badge{font-size:11px;font-weight:700;background:#2f5d3f;color:#fff;border-radius:5px;padding:2px 6px;text-align:center;}
+.rest .badge{background:#c99a2e;}
+
+.plan-item[draggable="true"]{cursor: grab;}
+.plan-item.dragging{opacity:0.4;}
+.plan-item.drag-over{border-top:3px solid #2f5d3f; padding-top:6px;}
+
+.col-time{font-weight:700;color:#2f5d3f;text-align:center;font-variant-numeric:tabular-nums;}
+.rest .col-time{color:#c99a2e;}
+.col-content{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
+.col-dur{font-size:12px;color:#7d8f84;text-align:right;font-variant-numeric:tabular-nums;}
+.col-dur input{width:45px;text-align:right;border:1px solid #d3ddd5;border-radius:4px;padding:2px 4px;font-family:inherit;}
+.col-content input{width:100px;border:1px solid #d3ddd5;border-radius:4px;padding:2px 4px;font-family:inherit;font-size:13px;}
+.drag-handle{cursor: grab; display:flex; align-items:center; gap:4px;}
+.drag-handle::before{content:'☰'; color:#b3bfb7; font-size:14px;}
+
+.summary{margin-top:14px;font-size:12px;color:#4a6b57;background:#eef4ef;border-radius:8px;
+         padding:10px 12px;line-height:1.8;font-variant-numeric:tabular-nums;}
+.over{color:#d9534f;font-weight:700;font-size:11px;}
+
+.btn-primary {color:#2f5d3f; background:#fff; border-color:#cdd8cf; padding:10px; font-size:13px; flex:1;}
+.btn-primary:hover {background:#e8f0e9;}
+
+.empty-day-hint{padding:16px;text-align:center;color:#9aa8a0;font-size:13px;line-height:1.6;list-style:none;}
+
+/* 複製對話框 */
+#copyDialog{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+#copyDialog .dlg{background:#fff;border-radius:12px;padding:16px;max-width:640px;width:100%;max-height:80vh;display:flex;flex-direction:column;gap:10px;}
+#copyDialog .dlg-title{font-weight:700;color:#2f5d3f;font-size:14px;}
+#copyDialog textarea{width:100%;height:320px;padding:10px;border:1px solid #d3ddd5;border-radius:6px;font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.6;resize:vertical;}
+#copyDialog .dlg-actions{display:flex;gap:8px;justify-content:flex-end;}
+#copyDialog .dlg-actions button{padding:8px 18px;font-weight:600;border-radius:6px;flex:initial;}
+#copyDialog .dlg-actions .primary{background:#2f5d3f;color:#fff;border-color:#2f5d3f;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⛰️ 登山行程估算</h1>
+  <button id="newTrip" class="header-btn">＋ 新的行程</button>
+</header>
+
+<main>
+  <div>
+    <details class="panel" id="libPanel" open>
+      <summary class="panel-header">
+        <h2>① 路段庫（上河 1.0 基準）</h2>
+        <span class="icon">▼</span>
+      </summary>
+      <div class="panel-content">
+        <div id="libMsg" class="lib-msg"></div>
+        <div class="lib-form">
+          <input id="fGroup" list="groupList" placeholder="分類 (如: 玉山群峰)" style="grid-column:1/-1;">
+          <datalist id="groupList"></datalist>
+          <input id="fFrom" placeholder="起點 A">
+          <input id="fTo"   placeholder="終點 B">
+          <input id="fUp"   type="number" min="1" placeholder="A→B 分鐘">
+          <input id="fDown" type="number" min="0" placeholder="B→A 分鐘(選填)">
+          <button id="fAdd">＋ 新增路段</button>
+          <button id="fCancel" hidden>取消編輯</button>
+        </div>
+        <div class="file-bar">
+          <button id="dlSeg">⬇ 下載路段檔</button>
+          <button id="upSeg">⬆ 載入路段檔</button>
+          <input type="file" id="fileSeg" accept=".json,.csv" hidden>
+        </div>
+        <div class="lib-ref">
+          上河圖參考網址：<a href="https://www.sunriver.com.tw/step2020.htm" target="_blank">https://www.sunriver.com.tw/step2020.htm</a>
+        </div>
+        <input type="search" id="libSearch" class="search-box" placeholder="🔍 搜尋路段或分類...">
+        <div id="libList"></div>
+      </div>
+    </details>
+  </div>
+
+  <div>
+    <section class="panel">
+      <div class="panel-fixed">
+        <h2 style="font-size:14px;margin:0 0 12px;color:#2f5d3f;">② 行程編排設定</h2>
+
+        <div id="completedPlanList"></div>
+        <div id="editingPlanList"></div>
+
+        <!-- ★ 三個按鈕同橫行：複製 / 匯出 / 匯入 -->
+        <div id="exportWrap" style="margin-top:14px; margin-bottom:20px;">
+          <div style="display:flex; gap:8px;">
+            <button id="export" class="btn-primary" style="flex:2;">📋 複製行程表</button>
+            <button id="exportFile" class="btn-primary">⬇ 匯出</button>
+            <button id="importFile" class="btn-primary">⬆ 匯入</button>
+            <input type="file" id="importFileInput" accept=".json" hidden>
+          </div>
+        </div>
+
+        <div class="speed-bar">
+          <label>上河係數</label>
+          <input type="number" id="speed" min="0.3" max="2" step="0.05" value="1">
+          <span class="hint">1.0=標準　0.8=快 20%　1.2=慢 20%</span>
+        </div>
+
+        <div class="dest-panel">
+          <label>📍 加入行程 / 前往目的地</label>
+          <div class="dest-row">
+            <select id="destGroup" class="dest-select">
+              <option value="">-- 所有分類 --</option>
+            </select>
+          </div>
+          <div class="dest-row">
+            <div class="search-input-wrap">
+              <input type="text" id="destSearch" class="dest-search" placeholder="🔍 搜尋地點...">
+              <button id="clearDestSearch" class="btn-clear" title="清除搜尋">✕</button>
+            </div>
+          </div>
+          <div class="dest-row">
+            <select id="destSelect" class="dest-select">
+              <option value="">-- 請先載入路段 --</option>
+            </select>
+            <button id="addDestBtn" type="button">加入</button>
+          </div>
+          <div id="posBox" class="pos-box"></div>
+        </div>
+
+        <div class="control-bar">
+          <button id="addRest">＋ 插入休息</button>
+          <button id="addDay">＋ 換日</button>
+          <button id="clearPlan">清除行程</button>
+        </div>
+
+        <div id="msg" class="msg"></div>
+
+        <div id="summary" class="summary"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+/* ══════════════════════════════════════════
+   資料模型
+   ══════════════════════════════════════════ */
+const KEY = 'hiking-planner-v13';
+
+const state = {
+  speed: 1,
+  dayStarts: { 1: '08:00' },
+  startPoint: null,
+  libSearch: '',
+  segments: [],
+  plan: [],
+  activeDay: 1
+};
+
+const nid = () => Math.random().toString(36).slice(2, 9);
+const $   = s => document.querySelector(s);
+let editingSegId = null;
+let msgTimer = null;
+let dragId = null;
+let clearPending = false;
+let clearTimer = null;
+let pageMsgTimer = null;
+let exportMsgTimer = null;
+let newTripPending = false;
+let newTripTimer = null;
+
+/* ══════════════════════════════════════════
+   工具函式
+   ══════════════════════════════════════════ */
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const toMin = s => { const [h, m] = String(s).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+const segById = id => state.segments.find(s => s.id === id);
+const getDayStart = d => state.dayStarts[d] || (d === 1 ? '08:00' : '05:00');
+
+function fmtTime(min) {
+  const over = Math.floor(min / 1440);
+  const m = ((min % 1440) + 1440) % 1440;
+  const s = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  return over > 0 ? `<span class="over">+${over}</span> ${s}` : s;
+}
+function fmtPlain(min) {
+  const over = Math.floor(min / 1440);
+  const m = ((min % 1440) + 1440) % 1440;
+  const s = String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  return over > 0 ? `+${over}日 ${s}` : s;
+}
+
+function showLibMsg(text) {
+  const el = $('#libMsg');
+  el.textContent = text;
+  el.style.display = 'block';
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function setMsg(text, ms = 2500) {
+  const el = $('#msg');
+  if (!el) return;
+  el.textContent = text;
+  clearTimeout(pageMsgTimer);
+  if (ms > 0) pageMsgTimer = setTimeout(() => el.textContent = '', ms);
+}
+
+function getAllGroups() {
+  const groups = new Set();
+  state.segments.forEach(s => { if (s.group) groups.add(s.group); });
+  return Array.from(groups).sort();
+}
+
+/* ══════════════════════════════════════════
+   儲存 / 讀取（雙備援）
+   ══════════════════════════════════════════ */
+function save() {
+  const json = JSON.stringify(state);
+  try { localStorage.setItem(KEY, json); return true; }
+  catch (e) {
+    try { sessionStorage.setItem(KEY, json); return true; }
+    catch (e2) { return false; }
+  }
+}
+
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) {}
+  if (!raw) {
+    try { raw = sessionStorage.getItem(KEY); } catch (e) {}
+  }
+  if (raw) {
+    try { Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  }
+
+  if (state.dayStarts && state.dayStarts[0] !== undefined) {
+    state.dayStarts[1] = state.dayStarts[0];
+    delete state.dayStarts[0];
+  }
+  if (!state.dayStarts) state.dayStarts = { 1: '08:00' };
+  if (state.startPoint === undefined) state.startPoint = null;
+  if (state.libSearch === undefined) state.libSearch = '';
+  if (state.activeDay === undefined || state.activeDay < 1) state.activeDay = 1;
+  if (!Array.isArray(state.plan)) state.plan = [];
+  if (!Array.isArray(state.segments)) state.segments = [];
+}
+
+/* ══════════════════════════════════════════
+   尋路
+   ══════════════════════════════════════════ */
+function findRoutes(startNode) {
+  const graph = {};
+  state.segments.forEach(s => {
+    if (!graph[s.from]) graph[s.from] = [];
+    if (!graph[s.to]) graph[s.to] = [];
+    graph[s.from].push({ to: s.to, weight: s.up, seg: s, dir: 1 });
+    graph[s.to].push({ to: s.from, weight: s.down, seg: s, dir: -1 });
+  });
+
+  const res = {};
+  const q = [{ node: startNode, dist: 0, path: [] }];
+
+  while (q.length) {
+    q.sort((a, b) => a.dist - b.dist);
+    const curr = q.shift();
+    if (res[curr.node] !== undefined) continue;
+    res[curr.node] = { dist: curr.dist, path: curr.path };
+    if (!graph[curr.node]) continue;
+    for (const edge of graph[curr.node]) {
+      if (res[edge.to] === undefined) {
+        q.push({
+          node: edge.to,
+          dist: curr.dist + edge.weight,
+          path: [...curr.path, { seg: edge.seg, dir: edge.dir }]
+        });
+      }
+    }
+  }
+  return res;
+}
+
+function currentPos() {
+  let currentDay = 1;
+  let lastPos = null;
+  for (let i = 0; i < state.plan.length; i++) {
+    const it = state.plan[i];
+    if (it.kind === 'daybreak') {
+      currentDay++;
+      if (currentDay > state.activeDay) break;
+    }
+    if (it.kind === 'seg') {
+      const s = segById(it.segId);
+      if (s) lastPos = it.dir === 1 ? s.to : s.from;
+    }
+  }
+  return lastPos;
+}
+
+function validatePlan() {
+  let pos = null;
+  const kept = [];
+  for (const it of state.plan) {
+    if (it.kind === 'daybreak' || it.kind === 'rest') { kept.push(it); continue; }
+    const s = segById(it.segId);
+    if (!s) continue;
+    const from = it.dir === 1 ? s.from : s.to;
+    if (pos === null || from === pos) {
+      pos = it.dir === 1 ? s.to : s.from;
+      kept.push(it);
+    } else {
+      break;
+    }
+  }
+  state.plan = kept;
+}
+
+/* ══════════════════════════════════════════
+   目的地下拉
+   ══════════════════════════════════════════ */
+function updateDestSelect() {
+  const pos = currentPos();
+  const groupVal = $('#destGroup').value;
+  const searchVal = $('#destSearch').value.toLowerCase();
+  const select = $('#destSelect');
+
+  if (pos === null && !state.startPoint) {
+    const nodes = new Set();
+    state.segments.forEach(s => { nodes.add(s.from); nodes.add(s.to); });
+    let options = Array.from(nodes).sort();
+    if (searchVal) options = options.filter(n => n.toLowerCase().includes(searchVal));
+    select.innerHTML = options.length
+      ? options.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
+      : '<option value="">-- 沒有符合的地點 --</option>';
+    $('#posBox').innerHTML = `請先選擇起點`;
+  } else {
+    const startNode = pos !== null ? pos : state.startPoint;
+    const r = findRoutes(startNode);
+    let options = [];
+    for (const dest in r) {
+      if (dest === startNode) continue;
+      options.push({ dest, dist: r[dest].dist, path: r[dest].path });
+    }
+    if (groupVal) options = options.filter(o => o.path.some(p => p.seg.group === groupVal));
+    if (searchVal) options = options.filter(o => o.dest.toLowerCase().includes(searchVal));
+    options.sort((a, b) => a.dist - b.dist);
+    select.innerHTML = options.length
+      ? options.map(o => `<option value="${esc(o.dest)}">${esc(o.dest)} (${Math.round(o.dist * state.speed)}分)</option>`).join('')
+      : '<option value="">-- 沒有符合的路線 --</option>';
+    $('#posBox').innerHTML = pos !== null
+      ? `目前位置：<b>${esc(pos)}</b>`
+      : `起點：<b>${esc(state.startPoint)}</b> (尚未出發)`;
+  }
+}
+
+/* ══════════════════════════════════════════
+   時間計算
+   ══════════════════════════════════════════ */
+function computePlan() {
+  const rows = [];
+  let day = 1;
+  let t = toMin(getDayStart(1));
+  rows.push({ kind: 'day', day, start: t });
+
+  for (const it of state.plan) {
+    if (it.kind === 'daybreak') {
+      day++;
+      t = toMin(getDayStart(day));
+      rows.push({ kind: 'day', day, start: t });
+      continue;
+    }
+    if (it.kind === 'seg') {
+      const s = segById(it.segId);
+      if (!s) continue;
+      const base  = it.dir === 1 ? s.up : s.down;
+      const dur   = Math.round(base * state.speed);
+      const from  = it.dir === 1 ? s.from : s.to;
+      const to    = it.dir === 1 ? s.to   : s.from;
+      const start = t;
+      t += dur;
+      rows.push({ kind: 'seg', day, from, to, dur, start, end: t, it });
+    } else if (it.kind === 'rest') {
+      const start = t;
+      const dur = it.minutes || 0;
+      t += dur;
+      rows.push({ kind: 'rest', day, start, end: t, dur, it });
+    }
+  }
+  return rows;
+}
+
+function updateSummary(rows) {
+  const moveMin = rows.filter(r => r.kind === 'seg').reduce((a, r) => a + r.dur, 0);
+  const restMin = rows.filter(r => r.kind === 'rest').reduce((a, r) => a + r.dur, 0);
+  const dayCnt  = rows.filter(r => r.kind === 'day').length;
+  const h = m => `${Math.floor(m / 60)} 小時${m % 60 ? ' ' + (m % 60) + ' 分' : ''}`;
+  $('#summary').innerHTML = `總計 <b>${dayCnt}</b> 天　｜　行進 <b>${h(moveMin)}</b>　｜　
+                  休息 <b>${h(restMin)}</b>　｜　合計 <b>${h(moveMin + restMin)}</b>
+                  <br><span class="muted">係數 ${state.speed.toFixed(2)}（上河 1.0 基準 × ${state.speed.toFixed(2)}）</span>`;
+}
+
+function refreshTimesAndSummary() {
+  const rows = computePlan();
+  for (const r of rows) {
+    if (r.kind === 'seg' || r.kind === 'rest') {
+      const li = document.querySelector(`li[data-id="${r.it.id}"]`);
+      if (li) {
+        const times = li.querySelectorAll('.col-time');
+        if (times.length >= 2) {
+          times[0].innerHTML = fmtTime(r.start);
+          times[1].innerHTML = fmtTime(r.end);
+        }
+      }
+    }
+  }
+  updateSummary(rows);
+}
+
+/* ══════════════════════════════════════════
+   渲染行程列表
+   ══════════════════════════════════════════ */
+function renderPlanAndTime() {
+  const completedEl = $('#completedPlanList');
+  const editingEl = $('#editingPlanList');
+
+  const rows = computePlan();
+
+  if (state.plan.length === 0) {
+    completedEl.innerHTML = '';
+    const dayNum = state.activeDay || 1;
+    editingEl.innerHTML = `
+      <div class="day-group" data-day="${dayNum}" data-open="true">
+        <div class="day-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge" style="background:#2f5d3f;">Day ${dayNum}</span>
+            <input type="time" class="day-start" data-day="${dayNum}" value="${getDayStart(dayNum)}">
+          </div>
+        </div>
+        <ul class="day-items" style="display:flex">
+          <li class="empty-day-hint">尚未安排行程<br>請從下方選擇起點與目的地開始規劃</li>
+        </ul>
+        <div class="day-footer">當日：行進 0 小時 ｜ 休息 0 小時 ｜ 合計 0 小時</div>
+      </div>`;
+    $('#summary').textContent = '';
+    updateExportButtons();
+    return;
+  }
+
+  let days = [];
+  let currentDayObj = null;
+  rows.forEach(r => {
+    if (r.kind === 'day') {
+      currentDayObj = { day: r.day, start: r.start, items: [] };
+      days.push(currentDayObj);
+    } else if (currentDayObj) {
+      currentDayObj.items.push(r);
+    }
+  });
+
+  let editingDayObj = days.find(d => d.day === state.activeDay);
+  if (!editingDayObj && days.length > 0) {
+    editingDayObj = days[days.length - 1];
+    state.activeDay = editingDayObj.day;
+  }
+
+  let completedDays = days.filter(d => d.day !== state.activeDay);
+  completedDays.sort((a, b) => a.day - b.day);
+
+  let htmlCompleted = '';
+  completedDays.forEach(dayObj => {
+    htmlCompleted += `<div class="day-group" data-day="${dayObj.day}" data-open="true">
+      <div class="day-header collapsible" onclick="if(event.target.closest('button,input'))return; const d=this.parentNode; const open=d.getAttribute('data-open')==='true'; d.setAttribute('data-open',!open); this.nextElementSibling.style.display=!open?'flex':'none';">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="badge" style="background:#9aa8a0;">Day ${dayObj.day}</span>
+          <input type="time" class="day-start" data-day="${dayObj.day}" value="${getDayStart(dayObj.day)}" disabled style="background:transparent;border:none;color:#5c7a66;font-size:13px;cursor:default;">
+        </div>
+        <button class="btn-edit" data-act="editDay" data-day="${dayObj.day}" style="border:none;background:#2f5d3f;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;">✎ 編輯</button>
+      </div>
+      <ul class="day-items" style="display:flex">`;
+
+    dayObj.items.forEach(r => {
+      if (r.kind === 'seg') {
+        htmlCompleted += `<li class="plan-item seg" data-id="${r.it.id}" data-kind="seg">
+          <div class="col-time">${fmtTime(r.start)}</div>
+          <div class="col-content">${esc(r.from)} → ${esc(r.to)}</div>
+          <div class="col-dur">${r.dur} 分</div>
+          <div class="col-time">${fmtTime(r.end)}</div>
+          <div></div>
+        </li>`;
+      } else if (r.kind === 'rest') {
+        htmlCompleted += `<li class="plan-item rest" data-id="${r.it.id}" data-kind="rest">
+          <div class="col-time">${fmtTime(r.start)}</div>
+          <div class="col-content">${esc(r.it.label)}</div>
+          <div class="col-dur">${r.it.minutes} 分</div>
+          <div class="col-time">${fmtTime(r.end)}</div>
+          <div></div>
+        </li>`;
+      }
+    });
+
+    const dm = dayObj.items.filter(r => r.kind === 'seg').reduce((a, r) => a + (r.dur || 0), 0);
+    const dr = dayObj.items.filter(r => r.kind === 'rest').reduce((a, r) => a + (r.dur || 0), 0);
+    const h = m => `${Math.floor(m / 60)} 小時${m % 60 ? ' ' + (m % 60) + ' 分' : ''}`;
+    htmlCompleted += `</ul>
+      <div class="day-footer">當日：行進 ${h(dm)} ｜ 休息 ${h(dr)} ｜ 合計 ${h(dm + dr)}</div>
+    </div>`;
+  });
+  completedEl.innerHTML = htmlCompleted;
+
+  let htmlEditing = '';
+  if (editingDayObj) {
+    htmlEditing += `<div class="day-group" data-day="${editingDayObj.day}" data-open="true">
+      <div class="day-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="badge" style="background:#2f5d3f;">Day ${editingDayObj.day}</span>
+          <input type="time" class="day-start" data-day="${editingDayObj.day}" value="${getDayStart(editingDayObj.day)}">
+        </div>
+      </div>
+      <ul class="day-items" style="display:flex">`;
+
+    if (editingDayObj.items.length === 0) {
+      htmlEditing += `<li class="empty-day-hint">尚未安排行程<br>請從下方選擇起點與目的地開始規劃</li>`;
+    } else {
+      editingDayObj.items.forEach(r => {
+        if (r.kind === 'seg') {
+          htmlEditing += `<li class="plan-item seg" data-id="${r.it.id}" data-kind="seg">
+            <div class="col-time">${fmtTime(r.start)}</div>
+            <div class="col-content">${esc(r.from)} → ${esc(r.to)}</div>
+            <div class="col-dur">${r.dur} 分</div>
+            <div class="col-time">${fmtTime(r.end)}</div>
+            <button class="x" data-act="del">✕</button>
+          </li>`;
+        } else if (r.kind === 'rest') {
+          htmlEditing += `<li class="plan-item rest" data-id="${r.it.id}" data-kind="rest" draggable="true">
+            <div class="col-time">${fmtTime(r.start)}</div>
+            <div class="col-content drag-handle">
+              <input class="in-label" data-act="label" value="${esc(r.it.label)}">
+            </div>
+            <div class="col-dur">
+              <input type="number" min="0" data-act="minutes" value="${r.it.minutes}"> 分
+            </div>
+            <div class="col-time">${fmtTime(r.end)}</div>
+            <button class="x" data-act="del">✕</button>
+          </li>`;
+        }
+      });
+    }
+
+    const dm = editingDayObj.items.filter(r => r.kind === 'seg').reduce((a, r) => a + (r.dur || 0), 0);
+    const dr = editingDayObj.items.filter(r => r.kind === 'rest').reduce((a, r) => a + (r.dur || 0), 0);
+    const h = m => `${Math.floor(m / 60)} 小時${m % 60 ? ' ' + (m % 60) + ' 分' : ''}`;
+    htmlEditing += `</ul>
+      <div class="day-footer">當日：行進 ${h(dm)} ｜ 休息 ${h(dr)} ｜ 合計 ${h(dm + dr)}</div>
+    </div>`;
+  }
+  editingEl.innerHTML = htmlEditing;
+  updateSummary(rows);
+  updateExportButtons();
+}
+
+function updateExportButtons() {
+  const hasPlan = state.plan.length > 0;
+  const hasAny  = hasPlan || state.segments.length > 0;
+  $('#export').disabled      = !hasPlan;
+  $('#exportFile').disabled  = !hasAny;
+  // 匯入永遠可用
+}
+
+/* ══════════════════════════════════════════
+   路段庫渲染
+   ══════════════════════════════════════════ */
+function renderLib() {
+  const el = $('#libList');
+  if (!state.segments.length) {
+    el.innerHTML = '<div class="empty">尚無路段<br>請在上方新增，或載入路段檔</div>';
+    return;
+  }
+  const q = state.libSearch.toLowerCase();
+  const filtered = state.segments.filter(s => {
+    if (!q) return true;
+    return (s.from && s.from.toLowerCase().includes(q)) ||
+           (s.to && s.to.toLowerCase().includes(q)) ||
+           (s.group && s.group.toLowerCase().includes(q));
+  });
+  if (!filtered.length) {
+    el.innerHTML = '<div class="empty">找不到符合條件的路段</div>';
+    return;
+  }
+  const grouped = {};
+  filtered.forEach(s => {
+    const g = s.group || '未分類';
+    if (!grouped[g]) grouped[g] = [];
+    grouped[g].push(s);
+  });
+  let html = '';
+  const sortedGroups = Object.keys(grouped).sort((a, b) => {
+    if (a === '未分類') return 1;
+    if (b === '未分類') return -1;
+    return a.localeCompare(b);
+  });
+  sortedGroups.forEach(g => {
+    const list = grouped[g];
+    const isOpen = q ? 'open' : '';
+    html += `<details class="lib-group" ${isOpen}>
+      <summary>${esc(g)}<span class="group-count">${list.length}</span></summary>
+      <div class="lib-items-wrap">`;
+    html += list.map(s => `
+        <div class="lib-item" data-id="${s.id}">
+          <div class="lib-top">
+            <span class="lib-name">${esc(s.from)} → ${esc(s.to)}</span>
+            <span>
+              <button class="x" data-act="editSeg" title="編輯">✎</button>
+              <button class="x" data-act="delSeg" title="刪除">✕</button>
+            </span>
+          </div>
+          <div class="lib-time">去程 ${s.up} 分　<span class="muted">回程 ${s.down} 分</span></div>
+        </div>`).join('');
+    html += `</div></details>`;
+  });
+  el.innerHTML = html;
+}
+
+function renderGroupList() {
+  const groups = getAllGroups();
+  $('#groupList').innerHTML = groups.map(g => `<option value="${esc(g)}">`).join('');
+  const destGroupEl = $('#destGroup');
+  const curVal = destGroupEl.value;
+  destGroupEl.innerHTML = `<option value="">-- 所有分類 --</option>` +
+    groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  destGroupEl.value = curVal;
+}
+
+function commit() {
+  save();
+  renderLib();
+  renderGroupList();
+  updateDestSelect();
+  renderPlanAndTime();
+}
+
+/* ══════════════════════════════════════════
+   事件：編輯按鈕 / 刪除
+   ══════════════════════════════════════════ */
+document.addEventListener('click', e => {
+  const editBtn = e.target.closest('[data-act="editDay"]');
+  if (editBtn) {
+    state.activeDay = parseInt(editBtn.dataset.day, 10);
+    commit();
+    return;
+  }
+
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const li  = btn.closest('[data-id]');
+  const id  = li ? li.dataset.id : null;
+
+  if (act === 'editSeg') {
+    const s = segById(id);
+    if (!s) return;
+    editingSegId = id;
+    $('#fGroup').value = s.group || '';
+    $('#fFrom').value = s.from;
+    $('#fTo').value   = s.to;
+    $('#fUp').value   = s.up;
+    $('#fDown').value = s.down;
+    $('#fAdd').textContent = '✔ 更新路段';
+    $('#fCancel').hidden = false;
+    $('#fFrom').focus();
+    return;
+  }
+  if (act === 'delSeg') {
+    state.segments = state.segments.filter(s => s.id !== id);
+    if (editingSegId === id) resetSegForm();
+    validatePlan();
+    commit();
+    return;
+  }
+
+  if (!id) return;
+  const idx = state.plan.findIndex(p => p.id === id);
+  if (idx < 0) return;
+
+  if (act === 'del') {
+    state.plan.splice(idx, 1);
+    validatePlan();
+    commit();
+  }
+});
+
+/* ══════════════════════════════════════════
+   事件：加入行程
+   ══════════════════════════════════════════ */
+$('#addDestBtn').addEventListener('click', () => {
+  const val = $('#destSelect').value;
+  if (!val) {
+    setMsg('請先選擇目的地');
+    return;
+  }
+
+  if (currentPos() === null && !state.startPoint) {
+    state.startPoint = val;
+    save();
+    updateDestSelect();
+    setMsg(`已設定起點：${val}`);
+    return;
+  }
+
+  const startNode = currentPos() !== null ? currentPos() : state.startPoint;
+  const routes = findRoutes(startNode);
+  const pathToAdd = routes[val] && routes[val].path;
+
+  if (pathToAdd && pathToAdd.length) {
+    let insertIdx = state.plan.length;
+    let currentDay = 1;
+    for (let i = 0; i < state.plan.length; i++) {
+      if (state.plan[i].kind === 'daybreak') {
+        currentDay++;
+        if (currentDay > state.activeDay) {
+          insertIdx = i;
+          break;
+        }
+      }
+    }
+    const newItems = pathToAdd.map(p => ({ id: nid(), kind: 'seg', segId: p.seg.id, dir: p.dir }));
+    state.plan.splice(insertIdx, 0, ...newItems);
+    state.startPoint = null;
+    validatePlan();
+    commit();
+  } else {
+    setMsg('找不到從目前位置到該目的地的路線');
+  }
+});
+
+$('#clearDestSearch').addEventListener('click', () => {
+  $('#destSearch').value = '';
+  updateDestSelect();
+});
+
+/* ══════════════════════════════════════════
+   拖拉排序
+   ══════════════════════════════════════════ */
+document.addEventListener('dragstart', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') {
+    e.preventDefault(); return;
+  }
+  const li = e.target.closest('li.rest');
+  if (!li) { e.preventDefault(); return; }
+  dragId = li.dataset.id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', dragId);
+  setTimeout(() => li.classList.add('dragging'), 0);
+});
+document.addEventListener('dragover', e => {
+  e.preventDefault();
+  const li = e.target.closest('li');
+  if (li && li.dataset.id !== dragId) {
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    li.classList.add('drag-over');
+  }
+});
+document.addEventListener('dragleave', e => {
+  const li = e.target.closest('li');
+  if (li) li.classList.remove('drag-over');
+});
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  const li = e.target.closest('li');
+  if (!li || !dragId || li.dataset.id === dragId) return;
+  const targetId = li.dataset.id;
+  const fromIdx = state.plan.findIndex(p => p.id === dragId);
+  const toIdx = state.plan.findIndex(p => p.id === targetId);
+  if (fromIdx > -1 && toIdx > -1) {
+    const [moved] = state.plan.splice(fromIdx, 1);
+    state.plan.splice(toIdx, 0, moved);
+    validatePlan();
+    commit();
+  }
+  dragId = null;
+});
+document.addEventListener('dragend', e => {
+  const li = e.target.closest('li');
+  if (li) li.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragId = null;
+});
+
+/* ══════════════════════════════════════════
+   輸入與變更
+   ══════════════════════════════════════════ */
+document.addEventListener('input', e => {
+  if (e.target.id === 'libSearch') {
+    state.libSearch = e.target.value;
+    save();
+    renderLib();
+    return;
+  }
+  const t  = e.target;
+  const li = t.closest('li[data-id]');
+  if (!li) return;
+  const it = state.plan.find(p => p.id === li.dataset.id);
+  if (!it) return;
+  if (t.dataset.act === 'minutes') {
+    it.minutes = Math.max(0, parseInt(t.value, 10) || 0);
+    save(); refreshTimesAndSummary();
+  } else if (t.dataset.act === 'label') {
+    it.label = t.value;
+    save(); refreshTimesAndSummary();
+  }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.classList.contains('day-start')) {
+    state.dayStarts[t.dataset.day] = t.value;
+    save(); refreshTimesAndSummary();
+  }
+  if (t.id === 'destGroup' || t.id === 'destSearch') {
+    updateDestSelect();
+  }
+});
+
+/* ══════════════════════════════════════════
+   路段新增 / 控制
+   ══════════════════════════════════════════ */
+function resetSegForm() {
+  editingSegId = null;
+  $('#fGroup').value = ''; $('#fFrom').value = ''; $('#fTo').value = '';
+  $('#fUp').value = '';   $('#fDown').value = '';
+  $('#fAdd').textContent = '＋ 新增路段';
+  $('#fCancel').hidden = true;
+}
+
+$('#fAdd').addEventListener('click', () => {
+  const group = $('#fGroup').value.trim();
+  const from  = $('#fFrom').value.trim();
+  const to    = $('#fTo').value.trim();
+  const up    = parseInt($('#fUp').value, 10);
+  let down    = parseInt($('#fDown').value, 10);
+
+  if (!from || !to || !(up > 0)) {
+    setMsg('請填寫起點、終點，以及 A→B 的分鐘數');
+    return;
+  }
+  if (isNaN(down) || down <= 0) down = up;
+
+  if (editingSegId) {
+    const s = segById(editingSegId);
+    if (s) { s.group = group; s.from = from; s.to = to; s.up = up; s.down = down; }
+    validatePlan();
+    resetSegForm();
+    commit();
+    setMsg(`已更新路段：${from} → ${to}`);
+  } else {
+    state.segments.push({ id: nid(), group, from, to, up, down });
+    resetSegForm();
+    commit();
+    setMsg(`已新增路段：${from} → ${to}`);
+  }
+  $('#fFrom').focus();
+});
+
+$('#fCancel').addEventListener('click', resetSegForm);
+
+$('#addRest').addEventListener('click', () => {
+  state.plan.push({ id: nid(), kind: 'rest', label: '休息', minutes: 30 });
+  commit();
+});
+
+$('#addDay').addEventListener('click', () => {
+  let currentDay = 1;
+  let hasNextDay = false;
+  for (let i = 0; i < state.plan.length; i++) {
+    if (state.plan[i].kind === 'daybreak') {
+      currentDay++;
+      if (currentDay === state.activeDay + 1) { hasNextDay = true; break; }
+    }
+  }
+  if (hasNextDay) {
+    state.activeDay++;
+  } else {
+    state.plan.push({ id: nid(), kind: 'daybreak' });
+    state.activeDay++;
+  }
+  commit();
+});
+
+$('#clearPlan').addEventListener('click', () => {
+  const activeDay = state.activeDay || 1;
+  const btn = $('#clearPlan');
+
+  let day = 1;
+  let startIdx = 0;
+  for (let i = 0; i < state.plan.length; i++) {
+    if (state.plan[i].kind === 'daybreak') {
+      if (day === activeDay) break;
+      day++;
+      startIdx = i + 1;
+    }
+  }
+  let endIdx = state.plan.length;
+  for (let i = startIdx; i < state.plan.length; i++) {
+    if (state.plan[i].kind === 'daybreak') { endIdx = i; break; }
+  }
+
+  if (startIdx >= endIdx) {
+    setMsg(`Day ${activeDay} 尚無行程可清除`);
+    return;
+  }
+
+  if (!clearPending) {
+    clearPending = true;
+    btn.textContent = `⚠ 再點一次清除 Day ${activeDay}`;
+    btn.style.background = '#fbe9e7';
+    btn.style.color = '#d9534f';
+    btn.style.borderColor = '#f0c4c0';
+    clearTimeout(clearTimer);
+    clearTimer = setTimeout(() => {
+      clearPending = false;
+      btn.textContent = '清除行程';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 3500);
+    return;
+  }
+
+  clearPending = false;
+  clearTimeout(clearTimer);
+  btn.textContent = '清除行程';
+  btn.style.background = '';
+  btn.style.color = '';
+  btn.style.borderColor = '';
+
+  state.plan.splice(startIdx, endIdx - startIdx);
+  if (state.plan.length === 0) state.startPoint = null;
+  validatePlan();
+  commit();
+  setMsg(`✓ 已清除 Day ${activeDay} 的行程`);
+});
+
+$('#speed').addEventListener('input', e => {
+  const v = parseFloat(e.target.value);
+  if (v > 0) {
+    state.speed = v;
+    save();
+    updateDestSelect();
+    refreshTimesAndSummary();
+  }
+});
+
+/* ══════════════════════════════════════════
+   ★ 新的行程：全部清除回到初次開啟狀態
+   ══════════════════════════════════════════ */
+$('#newTrip').addEventListener('click', () => {
+  const btn = $('#newTrip');
+
+  if (!newTripPending) {
+    newTripPending = true;
+    btn.textContent = '⚠ 再點一次清除全部';
+    btn.style.background = '#fbe9e7';
+    btn.style.color = '#d9534f';
+    clearTimeout(newTripTimer);
+    newTripTimer = setTimeout(() => {
+      newTripPending = false;
+      btn.textContent = '＋ 新的行程';
+      btn.style.background = '';
+      btn.style.color = '';
+    }, 3500);
+    return;
+  }
+
+  newTripPending = false;
+  clearTimeout(newTripTimer);
+  btn.textContent = '＋ 新的行程';
+  btn.style.background = '';
+  btn.style.color = '';
+
+  // 重置 state
+  state.segments   = [];
+  state.plan       = [];
+  state.startPoint = null;
+  state.dayStarts  = { 1: '08:00' };
+  state.speed      = 1;
+  state.libSearch  = '';
+  state.activeDay  = 1;
+
+  // 清除本機儲存
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  try { sessionStorage.removeItem(KEY); } catch (e) {}
+
+  // 重置 UI 輸入
+  resetSegForm();
+  $('#speed').value = 1;
+  $('#libSearch').value = '';
+  $('#destGroup').value = '';
+  $('#destSearch').value = '';
+
+  commit();
+  setMsg('✓ 已清除所有資料，回到初始狀態');
+});
+
+/* ══════════════════════════════════════════
+   檔案匯入匯出（路段庫）
+   ══════════════════════════════════════════ */
+$('#dlSeg').addEventListener('click', () => {
+  const data = {
+    type: 'hiking-segments', version: 1,
+    segments: state.segments.map(s => ({ group: s.group || '', from: s.from, to: s.to, up: s.up, down: s.down }))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hiking-segments.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+function parseSegmentJSON(text) {
+  const obj = JSON.parse(text);
+  const arr = Array.isArray(obj) ? obj : (obj.segments || []);
+  return arr.map(s => ({
+    group: String(s.group || s['分類'] || '').trim(),
+    from: String(s.from || s['起點'] || '').trim(),
+    to:   String(s.to   || s['終點'] || '').trim(),
+    up:   Number(s.up   ?? s['去程'] ?? 0),
+    down: Number(s.down ?? s['回程'] ?? s.up ?? 0)
+  })).filter(s => s.from && s.to && s.up > 0);
+}
+function parseSegmentCSV(text) {
+  const rows = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  rows.forEach((line, i) => {
+    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    if (i === 0 && /起點|from/i.test(cols[0])) return;
+    const [group, from, to, up, down] = cols;
+    const upN = Number(up), downN = Number(down) || upN;
+    if (from && to && upN > 0) out.push({ group, from, to, up: upN, down: downN });
+  });
+  return out;
+}
+
+$('#upSeg').addEventListener('click', () => $('#fileSeg').click());
+
+$('#fileSeg').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const text = String(reader.result);
+      const segs = /\.csv$/i.test(f.name) ? parseSegmentCSV(text) : parseSegmentJSON(text);
+      if (!segs.length) throw new Error('檔案中沒有有效的路段');
+      state.segments = segs.map(s => ({ id: nid(), group: s.group, from: s.from, to: s.to, up: s.up, down: s.down }));
+      state.plan = [];
+      state.startPoint = null;
+      state.activeDay = 1;
+      resetSegForm();
+      commit();
+      showLibMsg(`已載入 ${state.segments.length} 筆路段`);
+    } catch (err) {
+      showLibMsg('載入失敗：' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(f, 'utf-8');
+});
+
+/* ══════════════════════════════════════════
+   ★ 複製行程表（成功時按鈕文字變更）
+   ══════════════════════════════════════════ */
+$('#export').addEventListener('click', () => {
+  const btn = $('#export');
+
+  const rows = computePlan();
+  if (state.plan.length === 0) {
+    setMsg('目前沒有行程可複製');
+    return;
+  }
+
+  const dayGroups = [];
+  let cur = null;
+  for (const r of rows) {
+    if (r.kind === 'day') {
+      cur = { day: r.day, start: r.start, items: [] };
+      dayGroups.push(cur);
+    } else if (cur) {
+      cur.items.push(r);
+    }
+  }
+
+  const nonEmpty = dayGroups.filter(g => g.items.length > 0);
+  if (nonEmpty.length === 0) {
+    setMsg('目前沒有任何行程可複製');
+    return;
+  }
+
+  let txt = `登山行程表（上河係數 ${state.speed.toFixed(2)}）\n`;
+  nonEmpty.forEach(g => {
+    txt += `\n【Day ${g.day}】\n`;
+    txt += `${getDayStart(g.day)}  起登\n`;
+
+    let lastEnd = 0;
+    let lastTo = '';
+    for (const r of g.items) {
+      if (r.kind === 'seg') {
+        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分\n`;
+        lastEnd = r.end;
+        lastTo = r.to;
+      } else if (r.kind === 'rest') {
+        txt += `${fmtPlain(r.start)}  ☕ ${r.it.label}  ${r.dur}分\n`;
+        lastEnd = r.end;
+      }
+    }
+    if (lastTo) {
+      txt += `${fmtPlain(lastEnd)}  ${lastTo}\n`;
+    }
+  });
+
+  let copied = false;
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = txt;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    copied = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch (err) { copied = false; }
+
+  if (copied) {
+    btn.textContent = '✓ 行程表已複製到剪貼簿';
+    btn.style.background = '#e8f5e9';
+    btn.style.borderColor = '#b7dcc0';
+    clearTimeout(exportMsgTimer);
+    exportMsgTimer = setTimeout(() => {
+      btn.textContent = '📋 複製行程表';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  } else {
+    showCopyDialog(txt);
+  }
+});
+
+function showCopyDialog(text) {
+  const old = document.getElementById('copyDialog');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'copyDialog';
+  overlay.innerHTML = `
+    <div class="dlg">
+      <div class="dlg-title">行程表（請手動複製，Ctrl/Cmd+C）</div>
+      <textarea readonly></textarea>
+      <div class="dlg-actions">
+        <button class="primary" data-close>關閉</button>
+      </div>
+    </div>`;
+  const ta = overlay.querySelector('textarea');
+  ta.value = text;
+  overlay.querySelector('[data-close]').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  ta.focus();
+  ta.select();
+}
+
+/* ══════════════════════════════════════════
+   ★ 匯出行程（完整 state → JSON 檔）
+   ══════════════════════════════════════════ */
+$('#exportFile').addEventListener('click', () => {
+  if (state.plan.length === 0 && state.segments.length === 0) {
+    setMsg('目前沒有任何資料可匯出');
+    return;
+  }
+
+  const data = {
+    type: 'hiking-trip',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      speed: state.speed,
+      dayStarts: state.dayStarts,
+      startPoint: state.startPoint,
+      segments: state.segments.map(s => ({
+        id: s.id, group: s.group || '', from: s.from, to: s.to, up: s.up, down: s.down
+      })),
+      plan: state.plan.map(p => ({ ...p })),
+      activeDay: state.activeDay
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  a.href = URL.createObjectURL(blob);
+  a.download = `登山行程_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  setMsg('✓ 已匯出行程檔');
+});
+
+/* ══════════════════════════════════════════
+   ★ 匯入行程（JSON → 完整 state）
+   ══════════════════════════════════════════ */
+$('#importFile').addEventListener('click', () => $('#importFileInput').click());
+
+$('#importFileInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(String(reader.result));
+      const d = obj.data || obj;
+
+      if (!Array.isArray(d.segments) || !Array.isArray(d.plan)) {
+        throw new Error('檔案格式不正確（缺少 segments 或 plan）');
+      }
+
+      // 重建路段（保留原 id）
+      const newSegments = d.segments.map(s => ({
+        id: s.id || nid(),
+        group: s.group || '',
+        from: String(s.from || '').trim(),
+        to:   String(s.to   || '').trim(),
+        up:   Number(s.up)   || 0,
+        down: Number(s.down) || Number(s.up) || 0
+      })).filter(s => s.from && s.to && s.up > 0);
+
+      const validIds = new Set(newSegments.map(s => s.id));
+
+      // 過濾 plan：只保留合法路段
+      const newPlan = [];
+      let dropped = 0;
+      for (const p of d.plan) {
+        if (!p || !p.kind) continue;
+        if (p.kind === 'daybreak' || p.kind === 'rest') {
+          newPlan.push({ ...p, id: p.id || nid() });
+        } else if (p.kind === 'seg') {
+          if (validIds.has(p.segId)) {
+            newPlan.push({ ...p, id: p.id || nid() });
+          } else {
+            dropped++;
+          }
+        }
+      }
+
+      state.segments   = newSegments;
+      state.plan       = newPlan;
+      state.dayStarts  = d.dayStarts || { 1: '08:00' };
+      state.startPoint = d.startPoint || null;
+      state.speed      = Number(d.speed) || 1;
+      state.activeDay  = Number(d.activeDay) || 1;
+      state.libSearch  = '';
+
+      // 防呆
+      if (state.dayStarts && state.dayStarts[0] !== undefined) {
+        state.dayStarts[1] = state.dayStarts[0];
+        delete state.dayStarts[0];
+      }
+
+      // 更新 UI
+      $('#speed').value = state.speed;
+      $('#libSearch').value = '';
+      $('#destGroup').value = '';
+      $('#destSearch').value = '';
+      resetSegForm();
+
+      commit();
+
+      const segCnt = state.segments.length;
+      const tripCnt = state.plan.filter(p => p.kind === 'seg').length;
+      let msg = `✓ 已載入行程：${segCnt} 筆路段、${tripCnt} 段行程`;
+      if (dropped > 0) msg += `（${dropped} 段因路段缺失被略過）`;
+      setMsg(msg, 3500);
+    } catch (err) {
+      setMsg('匯入失敗：' + err.message, 3500);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(f, 'utf-8');
+});
+
+/* ══════════════════════════════════════════
+   離開頁面保險存檔
+   ══════════════════════════════════════════ */
+window.addEventListener('beforeunload', () => { save(); });
+window.addEventListener('pagehide', () => { save(); });
+
+/* ══════════════════════════════════════════
+   初始化
+   ══════════════════════════════════════════ */
+load();
+$('#speed').value = state.speed;
+$('#libSearch').value = state.libSearch;
+commit();
+
+if (state.segments.length > 0 || state.plan.length > 0) {
+  const parts = [];
+  if (state.segments.length > 0) parts.push(`路段 ${state.segments.length} 筆`);
+  if (state.plan.length > 0) parts.push(`行程 ${state.plan.length} 項`);
+  setMsg(`✓ 已載入本機儲存的資料（${parts.join('、')}）`, 3500);
+}
+</script>
+</body>
+</html>
