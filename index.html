@@ -67,11 +67,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .lib-msg{font-size:12px;color:#2f5d3f;margin-bottom:8px;text-align:center;display:none;background:#eef4ef;padding:6px;border-radius:6px;}
 
 /* ── 控制區 ── */
-.speed-bar{margin-bottom:14px; display:flex; align-items:center; gap:10px; background:#f4f7f5; padding:10px; border-radius:8px; flex-wrap:wrap;}
-.speed-bar label{font-size:13px; font-weight:700; color:#2f5d3f;}
-.speed-bar input{padding:4px 8px;border:1px solid #cdd8cf;border-radius:6px;font-size:14px;width:74px;font-family:inherit;}
-.speed-bar .hint{font-size:12px;color:#7d8f84;}
-
 .dest-panel{background:#eef4ef;border-radius:8px;padding:12px;margin-bottom:14px;}
 .dest-panel label{display:block;font-size:13px;font-weight:700;color:#2f5d3f;margin-bottom:8px;}
 .dest-row{display:flex;gap:8px;margin-bottom:8px;}
@@ -83,7 +78,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .btn-clear:hover{color:#d9534f;background:transparent;}
 .dest-row button[type="button"]{padding:0 14px;background:#2f5d3f;color:#fff;font-weight:600;border:none;}
 .dest-row button[type="button"]:hover{background:#3d7452;}
-.pos-box{font-size:12.5px;color:#5c7a66;margin-top:8px;}
+.pos-box{font-size:12.5px;color:#5c7a66;margin-bottom:8px;}
 .pos-box b{color:#2f5d3f;font-size:14px;}
 
 .control-bar{display:flex;gap:8px;margin-bottom:14px;}
@@ -102,7 +97,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .day-items{padding:8px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #e2e9e3;list-style:none;margin:0;}
 .day-footer{padding:8px 12px;background:#fafcfa;font-size:11px;color:#7d8f84;text-align:right;border-top:1px dashed #e2e9e3;}
 
-.plan-item{display:grid;grid-template-columns:56px 1fr auto 56px 24px;gap:8px;align-items:center;
+.plan-item{display:grid;grid-template-columns:50px 1fr 95px auto 50px 24px;gap:8px;align-items:center;
            border:1px solid #e2e9e3;border-radius:8px;padding:8px 10px;background:#fafcfa;font-size:13px;transition:background .1s,border-color .1s;}
 .plan-item.seg{background:#fff;}
 .plan-item.rest{background:#fffaf0;border-color:#f0e2c4;}
@@ -116,20 +111,25 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .col-time{font-weight:700;color:#2f5d3f;text-align:center;font-variant-numeric:tabular-nums;}
 .rest .col-time{color:#c99a2e;}
 .col-content{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;}
-.col-dur{font-size:12px;color:#7d8f84;text-align:right;font-variant-numeric:tabular-nums;}
+.col-dur{font-size:12px;color:#7d8f84;text-align:right;font-variant-numeric:tabular-nums;min-width: 45px;}
 .col-dur input{width:45px;text-align:right;border:1px solid #d3ddd5;border-radius:4px;padding:2px 4px;font-family:inherit;}
 .col-content input{width:100px;border:1px solid #d3ddd5;border-radius:4px;padding:2px 4px;font-family:inherit;font-size:13px;}
+
+.col-speed{display:flex; align-items:center; justify-content:center; gap:4px; font-size:12px; color:#7d8f84;}
+.col-speed input{width:40px;text-align:center;border:1px solid #d3ddd5;border-radius:4px;padding:2px;font-family:inherit;font-size:12px;color:#2f5d3f;font-weight:600;}
+.col-speed input:focus{outline:none;border-color:#2f5d3f;background:#fff;}
+
 .drag-handle{cursor: grab; display:flex; align-items:center; gap:4px;}
 .drag-handle::before{content:'☰'; color:#b3bfb7; font-size:14px;}
 
-.summary{margin-top:14px;font-size:12px;color:#4a6b57;background:#eef4ef;border-radius:8px;
-         padding:10px 12px;line-height:1.8;font-variant-numeric:tabular-nums;}
+.summary{font-size:12px;color:#4a6b57;background:#eef4ef;border-radius:8px;
+         padding:10px 12px;line-height:1.8;font-variant-numeric:tabular-nums;margin-bottom:14px;}
 .over{color:#d9534f;font-weight:700;font-size:11px;}
 
 .btn-primary {color:#2f5d3f; background:#fff; border-color:#cdd8cf; padding:10px; font-size:13px; flex:1;}
 .btn-primary:hover {background:#e8f0e9;}
 
-.empty-day-hint{padding:16px;text-align:center;color:#9aa8a0;font-size:13px;line-height:1.6;list-style:none;}
+.empty-day-hint{padding:16px;text-align:center;color:#9aa8a0;font-size:13px;line-height:1.6;list-style:none;grid-column:1/-1;}
 
 /* 複製對話框 */
 #copyDialog{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
@@ -189,24 +189,25 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
         <div id="completedPlanList"></div>
         <div id="editingPlanList"></div>
 
-        <!-- ★ 三個按鈕同橫行：複製 / 匯出 / 匯入 -->
-        <div id="exportWrap" style="margin-top:14px; margin-bottom:20px;">
-          <div style="display:flex; gap:8px;">
-            <button id="export" class="btn-primary" style="flex:2;">📋 複製行程表</button>
-            <button id="exportFile" class="btn-primary">⬇ 匯出</button>
-            <button id="importFile" class="btn-primary">⬆ 匯入</button>
-            <input type="file" id="importFileInput" accept=".json" hidden>
+        <div id="summary" class="summary"></div>
+
+        <!-- ★ 按鈕：複製 / 匯出 JSON / 匯出 Excel / 匯入 -->
+        <div id="exportWrap" style="margin-bottom:20px;">
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button id="export" class="btn-primary" style="flex:2; min-width:120px;">📋 複製行程表</button>
+            <button id="exportFile" class="btn-primary" style="flex:1; min-width:100px;">⬇ 匯出 JSON</button>
+            <button id="exportExcel" class="btn-primary" style="flex:1; min-width:100px;">📊 匯出 Excel</button>
+            <button id="importFile" class="btn-primary" style="flex:1; min-width:100px;">⬆ 匯入</button>
+            <input type="file" id="importFileInput" accept=".json,.csv" hidden>
           </div>
         </div>
 
-        <div class="speed-bar">
-          <label>上河係數</label>
-          <input type="number" id="speed" min="0.3" max="2" step="0.05" value="1">
-          <span class="hint">1.0=標準　0.8=快 20%　1.2=慢 20%</span>
-        </div>
-
+        <!-- 加入行程區塊 -->
         <div class="dest-panel">
           <label>📍 加入行程 / 前往目的地</label>
+          
+          <div id="posBox" class="pos-box"></div>
+
           <div class="dest-row">
             <select id="destGroup" class="dest-select">
               <option value="">-- 所有分類 --</option>
@@ -224,7 +225,15 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
             </select>
             <button id="addDestBtn" type="button">加入</button>
           </div>
-          <div id="posBox" class="pos-box"></div>
+          
+          <div class="dest-row" style="margin-top:8px;">
+            <label style="font-size:13px; font-weight:700; color:#2f5d3f; margin:0; display:flex; align-items:center; gap:8px; width:100%;">
+              本段加入速度：上河
+              <input type="number" id="nextSpeed" min="0.3" max="2" step="0.05" value="1" style="width:60px; padding:4px 8px; border:1px solid #cdd8cf; border-radius:6px; text-align:center;">
+              ×
+              <span class="hint" style="font-weight:normal; font-size:11px; margin-left:auto;">會套用到新加入的路線</span>
+            </label>
+          </div>
         </div>
 
         <div class="control-bar">
@@ -234,8 +243,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
         </div>
 
         <div id="msg" class="msg"></div>
-
-        <div id="summary" class="summary"></div>
       </div>
     </section>
   </div>
@@ -245,10 +252,11 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v13';
+const KEY = 'hiking-planner-v16';
 
 const state = {
   speed: 1,
+  dayGlobalSpeeds: {},
   dayStarts: { 1: '08:00' },
   startPoint: null,
   libSearch: '',
@@ -315,7 +323,7 @@ function getAllGroups() {
 }
 
 /* ══════════════════════════════════════════
-   儲存 / 讀取（雙備援）
+   儲存 / 讀取
    ══════════════════════════════════════════ */
 function save() {
   const json = JSON.stringify(state);
@@ -341,6 +349,7 @@ function load() {
     delete state.dayStarts[0];
   }
   if (!state.dayStarts) state.dayStarts = { 1: '08:00' };
+  if (!state.dayGlobalSpeeds) state.dayGlobalSpeeds = {};
   if (state.startPoint === undefined) state.startPoint = null;
   if (state.libSearch === undefined) state.libSearch = '';
   if (state.activeDay === undefined || state.activeDay < 1) state.activeDay = 1;
@@ -425,12 +434,20 @@ function updateDestSelect() {
   const groupVal = $('#destGroup').value;
   const searchVal = $('#destSearch').value.toLowerCase();
   const select = $('#destSelect');
+  const prevVal = select.value;
+  
+  const nextSpeed = parseFloat($('#nextSpeed').value) || 1;
 
   if (pos === null && !state.startPoint) {
     const nodes = new Set();
-    state.segments.forEach(s => { nodes.add(s.from); nodes.add(s.to); });
+    state.segments.forEach(s => {
+      if (!groupVal || s.group === groupVal) {
+        nodes.add(s.from); nodes.add(s.to);
+      }
+    });
     let options = Array.from(nodes).sort();
     if (searchVal) options = options.filter(n => n.toLowerCase().includes(searchVal));
+    
     select.innerHTML = options.length
       ? options.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
       : '<option value="">-- 沒有符合的地點 --</option>';
@@ -443,15 +460,23 @@ function updateDestSelect() {
       if (dest === startNode) continue;
       options.push({ dest, dist: r[dest].dist, path: r[dest].path });
     }
+    
     if (groupVal) options = options.filter(o => o.path.some(p => p.seg.group === groupVal));
+    
     if (searchVal) options = options.filter(o => o.dest.toLowerCase().includes(searchVal));
     options.sort((a, b) => a.dist - b.dist);
+    
     select.innerHTML = options.length
-      ? options.map(o => `<option value="${esc(o.dest)}">${esc(o.dest)} (${Math.round(o.dist * state.speed)}分)</option>`).join('')
+      ? options.map(o => `<option value="${esc(o.dest)}">${esc(o.dest)} (${Math.round(o.dist * nextSpeed)}分)</option>`).join('')
       : '<option value="">-- 沒有符合的路線 --</option>';
+      
     $('#posBox').innerHTML = pos !== null
       ? `目前位置：<b>${esc(pos)}</b>`
       : `起點：<b>${esc(state.startPoint)}</b> (尚未出發)`;
+  }
+
+  if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
+    select.value = prevVal;
   }
 }
 
@@ -475,12 +500,16 @@ function computePlan() {
       const s = segById(it.segId);
       if (!s) continue;
       const base  = it.dir === 1 ? s.up : s.down;
-      const dur   = Math.round(base * state.speed);
+      
+      const dayGlobal = state.dayGlobalSpeeds[day] || 1;
+      const currentSpeed = (it.speed !== undefined && it.speed !== null) ? it.speed : dayGlobal;
+      
+      const dur   = Math.round(base * currentSpeed);
       const from  = it.dir === 1 ? s.from : s.to;
       const to    = it.dir === 1 ? s.to   : s.from;
       const start = t;
       t += dur;
-      rows.push({ kind: 'seg', day, from, to, dur, start, end: t, it });
+      rows.push({ kind: 'seg', day, from, to, dur, start, end: t, it, speed: currentSpeed });
     } else if (it.kind === 'rest') {
       const start = t;
       const dur = it.minutes || 0;
@@ -497,8 +526,7 @@ function updateSummary(rows) {
   const dayCnt  = rows.filter(r => r.kind === 'day').length;
   const h = m => `${Math.floor(m / 60)} 小時${m % 60 ? ' ' + (m % 60) + ' 分' : ''}`;
   $('#summary').innerHTML = `總計 <b>${dayCnt}</b> 天　｜　行進 <b>${h(moveMin)}</b>　｜　
-                  休息 <b>${h(restMin)}</b>　｜　合計 <b>${h(moveMin + restMin)}</b>
-                  <br><span class="muted">係數 ${state.speed.toFixed(2)}（上河 1.0 基準 × ${state.speed.toFixed(2)}）</span>`;
+                  休息 <b>${h(restMin)}</b>　｜　合計 <b>${h(moveMin + restMin)}</b>`;
 }
 
 function refreshTimesAndSummary() {
@@ -511,6 +539,10 @@ function refreshTimesAndSummary() {
         if (times.length >= 2) {
           times[0].innerHTML = fmtTime(r.start);
           times[1].innerHTML = fmtTime(r.end);
+        }
+        if (r.kind === 'seg') {
+          const durEl = li.querySelector('.col-dur');
+          if (durEl) durEl.textContent = `${r.dur} 分`;
         }
       }
     }
@@ -536,6 +568,9 @@ function renderPlanAndTime() {
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="badge" style="background:#2f5d3f;">Day ${dayNum}</span>
             <input type="time" class="day-start" data-day="${dayNum}" value="${getDayStart(dayNum)}">
+            <div style="display:flex; align-items:center; gap:4px; margin-left:12px; font-size:12px; color:#2f5d3f; font-weight:700;">
+              全域上河 <input type="number" min="0.3" max="2" step="0.05" class="day-global-speed" data-day="${dayNum}" value="${state.dayGlobalSpeeds[dayNum] || 1}" style="width:50px; text-align:center; border:1px solid #cdd8cf; border-radius:4px; padding:2px;"> ×
+            </div>
           </div>
         </div>
         <ul class="day-items" style="display:flex">
@@ -585,6 +620,7 @@ function renderPlanAndTime() {
         htmlCompleted += `<li class="plan-item seg" data-id="${r.it.id}" data-kind="seg">
           <div class="col-time">${fmtTime(r.start)}</div>
           <div class="col-content">${esc(r.from)} → ${esc(r.to)}</div>
+          <div class="col-speed">上河 ${r.speed} ×</div>
           <div class="col-dur">${r.dur} 分</div>
           <div class="col-time">${fmtTime(r.end)}</div>
           <div></div>
@@ -593,6 +629,7 @@ function renderPlanAndTime() {
         htmlCompleted += `<li class="plan-item rest" data-id="${r.it.id}" data-kind="rest">
           <div class="col-time">${fmtTime(r.start)}</div>
           <div class="col-content">${esc(r.it.label)}</div>
+          <div class="col-speed"></div>
           <div class="col-dur">${r.it.minutes} 分</div>
           <div class="col-time">${fmtTime(r.end)}</div>
           <div></div>
@@ -611,11 +648,16 @@ function renderPlanAndTime() {
 
   let htmlEditing = '';
   if (editingDayObj) {
+    const globalSpd = state.dayGlobalSpeeds[editingDayObj.day] || 1;
     htmlEditing += `<div class="day-group" data-day="${editingDayObj.day}" data-open="true">
       <div class="day-header">
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="badge" style="background:#2f5d3f;">Day ${editingDayObj.day}</span>
           <input type="time" class="day-start" data-day="${editingDayObj.day}" value="${getDayStart(editingDayObj.day)}">
+          
+          <div style="display:flex; align-items:center; gap:4px; margin-left:12px; font-size:12px; color:#2f5d3f; font-weight:700;">
+            全域上河 <input type="number" min="0.3" max="2" step="0.05" class="day-global-speed" data-day="${editingDayObj.day}" value="${globalSpd}" style="width:50px; text-align:center; border:1px solid #cdd8cf; border-radius:4px; padding:2px;"> ×
+          </div>
         </div>
       </div>
       <ul class="day-items" style="display:flex">`;
@@ -628,6 +670,9 @@ function renderPlanAndTime() {
           htmlEditing += `<li class="plan-item seg" data-id="${r.it.id}" data-kind="seg">
             <div class="col-time">${fmtTime(r.start)}</div>
             <div class="col-content">${esc(r.from)} → ${esc(r.to)}</div>
+            <div class="col-speed">
+              上河 <input type="number" min="0.1" max="3" step="0.05" data-act="seg-speed" value="${r.speed}"> ×
+            </div>
             <div class="col-dur">${r.dur} 分</div>
             <div class="col-time">${fmtTime(r.end)}</div>
             <button class="x" data-act="del">✕</button>
@@ -638,6 +683,7 @@ function renderPlanAndTime() {
             <div class="col-content drag-handle">
               <input class="in-label" data-act="label" value="${esc(r.it.label)}">
             </div>
+            <div class="col-speed"></div>
             <div class="col-dur">
               <input type="number" min="0" data-act="minutes" value="${r.it.minutes}"> 分
             </div>
@@ -662,10 +708,10 @@ function renderPlanAndTime() {
 
 function updateExportButtons() {
   const hasPlan = state.plan.length > 0;
-  const hasAny  = hasPlan || state.segments.length > 0;
   $('#export').disabled      = !hasPlan;
-  $('#exportFile').disabled  = !hasAny;
-  // 匯入永遠可用
+  $('#exportFile').disabled  = !hasPlan; // 修改：與其他匯出按鈕同步，無行程時禁用
+  $('#exportExcel').disabled = !hasPlan;
+  // 匯入 (#importFile) 永遠可用
 }
 
 /* ══════════════════════════════════════════
@@ -824,7 +870,10 @@ $('#addDestBtn').addEventListener('click', () => {
         }
       }
     }
-    const newItems = pathToAdd.map(p => ({ id: nid(), kind: 'seg', segId: p.seg.id, dir: p.dir }));
+    
+    const joinSpeed = parseFloat($('#nextSpeed').value) || 1;
+    const newItems = pathToAdd.map(p => ({ id: nid(), kind: 'seg', segId: p.seg.id, dir: p.dir, speed: joinSpeed }));
+    
     state.plan.splice(insertIdx, 0, ...newItems);
     state.startPoint = null;
     validatePlan();
@@ -903,7 +952,15 @@ document.addEventListener('input', e => {
   if (!li) return;
   const it = state.plan.find(p => p.id === li.dataset.id);
   if (!it) return;
-  if (t.dataset.act === 'minutes') {
+
+  if (t.dataset.act === 'seg-speed') {
+    const val = parseFloat(t.value);
+    if (!isNaN(val) && val > 0) {
+      it.speed = val;
+      save(); 
+      refreshTimesAndSummary();
+    }
+  } else if (t.dataset.act === 'minutes') {
     it.minutes = Math.max(0, parseInt(t.value, 10) || 0);
     save(); refreshTimesAndSummary();
   } else if (t.dataset.act === 'label') {
@@ -918,7 +975,27 @@ document.addEventListener('change', e => {
     state.dayStarts[t.dataset.day] = t.value;
     save(); refreshTimesAndSummary();
   }
-  if (t.id === 'destGroup' || t.id === 'destSearch') {
+  
+  if (t.classList.contains('day-global-speed')) {
+    const day = parseInt(t.dataset.day, 10);
+    const val = parseFloat(t.value);
+    if (!isNaN(val) && val > 0) {
+      state.dayGlobalSpeeds[day] = val;
+      
+      let currentDay = 1;
+      for (const it of state.plan) {
+        if (it.kind === 'daybreak') currentDay++;
+        if (currentDay === day && it.kind === 'seg') {
+          it.speed = val;
+        }
+      }
+      save();
+      renderPlanAndTime();
+      setMsg(`✓ Day ${day} 的所有路段已套用上河 ${val}`);
+    }
+  }
+
+  if (t.id === 'destGroup' || t.id === 'destSearch' || t.id === 'nextSpeed') {
     updateDestSelect();
   }
 });
@@ -1042,18 +1119,17 @@ $('#clearPlan').addEventListener('click', () => {
   setMsg(`✓ 已清除 Day ${activeDay} 的行程`);
 });
 
-$('#speed').addEventListener('input', e => {
+$('#nextSpeed').addEventListener('input', (e) => {
   const v = parseFloat(e.target.value);
   if (v > 0) {
     state.speed = v;
     save();
     updateDestSelect();
-    refreshTimesAndSummary();
   }
 });
 
 /* ══════════════════════════════════════════
-   ★ 新的行程：全部清除回到初次開啟狀態
+   新的行程
    ══════════════════════════════════════════ */
 $('#newTrip').addEventListener('click', () => {
   const btn = $('#newTrip');
@@ -1079,22 +1155,20 @@ $('#newTrip').addEventListener('click', () => {
   btn.style.background = '';
   btn.style.color = '';
 
-  // 重置 state
   state.segments   = [];
   state.plan       = [];
   state.startPoint = null;
   state.dayStarts  = { 1: '08:00' };
+  state.dayGlobalSpeeds = {};
   state.speed      = 1;
   state.libSearch  = '';
   state.activeDay  = 1;
 
-  // 清除本機儲存
   try { localStorage.removeItem(KEY); } catch (e) {}
   try { sessionStorage.removeItem(KEY); } catch (e) {}
 
-  // 重置 UI 輸入
   resetSegForm();
-  $('#speed').value = 1;
+  $('#nextSpeed').value = 1;
   $('#libSearch').value = '';
   $('#destGroup').value = '';
   $('#destSearch').value = '';
@@ -1104,7 +1178,7 @@ $('#newTrip').addEventListener('click', () => {
 });
 
 /* ══════════════════════════════════════════
-   檔案匯入匯出（路段庫）
+   檔案匯入匯出
    ══════════════════════════════════════════ */
 $('#dlSeg').addEventListener('click', () => {
   const data = {
@@ -1169,12 +1243,8 @@ $('#fileSeg').addEventListener('change', e => {
   reader.readAsText(f, 'utf-8');
 });
 
-/* ══════════════════════════════════════════
-   ★ 複製行程表（成功時按鈕文字變更）
-   ══════════════════════════════════════════ */
 $('#export').addEventListener('click', () => {
   const btn = $('#export');
-
   const rows = computePlan();
   if (state.plan.length === 0) {
     setMsg('目前沒有行程可複製');
@@ -1198,7 +1268,7 @@ $('#export').addEventListener('click', () => {
     return;
   }
 
-  let txt = `登山行程表（上河係數 ${state.speed.toFixed(2)}）\n`;
+  let txt = `登山行程表\n`;
   nonEmpty.forEach(g => {
     txt += `\n【Day ${g.day}】\n`;
     txt += `${getDayStart(g.day)}  起登\n`;
@@ -1207,7 +1277,7 @@ $('#export').addEventListener('click', () => {
     let lastTo = '';
     for (const r of g.items) {
       if (r.kind === 'seg') {
-        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分\n`;
+        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分 (上河 ${r.speed})\n`;
         lastEnd = r.end;
         lastTo = r.to;
       } else if (r.kind === 'rest') {
@@ -1270,21 +1340,19 @@ function showCopyDialog(text) {
   ta.select();
 }
 
-/* ══════════════════════════════════════════
-   ★ 匯出行程（完整 state → JSON 檔）
-   ══════════════════════════════════════════ */
+/* ★ 匯出 JSON */
 $('#exportFile').addEventListener('click', () => {
-  if (state.plan.length === 0 && state.segments.length === 0) {
-    setMsg('目前沒有任何資料可匯出');
+  if (state.plan.length === 0) { // 修改：與其他按鈕同步，無行程時顯示提示
+    setMsg('目前沒有行程可匯出');
     return;
   }
-
   const data = {
     type: 'hiking-trip',
     version: 1,
     exportedAt: new Date().toISOString(),
     data: {
       speed: state.speed,
+      dayGlobalSpeeds: state.dayGlobalSpeeds,
       dayStarts: state.dayStarts,
       startPoint: state.startPoint,
       segments: state.segments.map(s => ({
@@ -1303,85 +1371,69 @@ $('#exportFile').addEventListener('click', () => {
   a.download = `登山行程_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-
   setMsg('✓ 已匯出行程檔');
 });
 
+/* ★ 匯出 Excel (CSV) */
+$('#exportExcel').addEventListener('click', () => {
+  const rows = computePlan();
+  if (state.plan.length === 0) {
+    setMsg('目前沒有行程可匯出');
+    return;
+  }
+
+  let csv = '天數,起點時間,迄點時間,行程內容,上河係數,時長(分)\n';
+
+  for (const r of rows) {
+    if (r.kind === 'day') {
+      // 新增起登時間列
+      const startStr = getDayStart(r.day);
+      csv += `Day ${r.day},${startStr},${startStr},起登,-,0\n`;
+    } else if (r.kind === 'seg') {
+      csv += `Day ${r.day},${fmtPlain(r.start)},${fmtPlain(r.end)},"${r.from} → ${r.to}",${r.speed},${r.dur}\n`;
+    } else if (r.kind === 'rest') {
+      csv += `Day ${r.day},${fmtPlain(r.start)},${fmtPlain(r.end)},"☕ ${r.it.label}",-,${r.dur}\n`;
+    }
+  }
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  a.href = URL.createObjectURL(blob);
+  a.download = `登山行程_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  
+  setMsg('✓ 已匯出 Excel 檔');
+});
+
 /* ══════════════════════════════════════════
-   ★ 匯入行程（JSON → 完整 state）
+   ★ 匯入 (自動判斷 JSON 或 CSV)
    ══════════════════════════════════════════ */
 $('#importFile').addEventListener('click', () => $('#importFileInput').click());
 
 $('#importFileInput').addEventListener('change', e => {
   const f = e.target.files[0];
   if (!f) return;
-
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const obj = JSON.parse(String(reader.result));
-      const d = obj.data || obj;
-
-      if (!Array.isArray(d.segments) || !Array.isArray(d.plan)) {
-        throw new Error('檔案格式不正確（缺少 segments 或 plan）');
+      const text = String(reader.result);
+      if (f.name.toLowerCase().endsWith('.csv')) {
+        importFromCSV(text);
+      } else {
+        importFromJSON(text);
       }
-
-      // 重建路段（保留原 id）
-      const newSegments = d.segments.map(s => ({
-        id: s.id || nid(),
-        group: s.group || '',
-        from: String(s.from || '').trim(),
-        to:   String(s.to   || '').trim(),
-        up:   Number(s.up)   || 0,
-        down: Number(s.down) || Number(s.up) || 0
-      })).filter(s => s.from && s.to && s.up > 0);
-
-      const validIds = new Set(newSegments.map(s => s.id));
-
-      // 過濾 plan：只保留合法路段
-      const newPlan = [];
-      let dropped = 0;
-      for (const p of d.plan) {
-        if (!p || !p.kind) continue;
-        if (p.kind === 'daybreak' || p.kind === 'rest') {
-          newPlan.push({ ...p, id: p.id || nid() });
-        } else if (p.kind === 'seg') {
-          if (validIds.has(p.segId)) {
-            newPlan.push({ ...p, id: p.id || nid() });
-          } else {
-            dropped++;
-          }
-        }
-      }
-
-      state.segments   = newSegments;
-      state.plan       = newPlan;
-      state.dayStarts  = d.dayStarts || { 1: '08:00' };
-      state.startPoint = d.startPoint || null;
-      state.speed      = Number(d.speed) || 1;
-      state.activeDay  = Number(d.activeDay) || 1;
-      state.libSearch  = '';
-
-      // 防呆
-      if (state.dayStarts && state.dayStarts[0] !== undefined) {
-        state.dayStarts[1] = state.dayStarts[0];
-        delete state.dayStarts[0];
-      }
-
-      // 更新 UI
-      $('#speed').value = state.speed;
+      
+      // 共用更新
+      $('#nextSpeed').value = state.speed;
       $('#libSearch').value = '';
       $('#destGroup').value = '';
       $('#destSearch').value = '';
       resetSegForm();
-
       commit();
 
-      const segCnt = state.segments.length;
-      const tripCnt = state.plan.filter(p => p.kind === 'seg').length;
-      let msg = `✓ 已載入行程：${segCnt} 筆路段、${tripCnt} 段行程`;
-      if (dropped > 0) msg += `（${dropped} 段因路段缺失被略過）`;
-      setMsg(msg, 3500);
     } catch (err) {
       setMsg('匯入失敗：' + err.message, 3500);
     }
@@ -1390,17 +1442,185 @@ $('#importFileInput').addEventListener('change', e => {
   reader.readAsText(f, 'utf-8');
 });
 
-/* ══════════════════════════════════════════
-   離開頁面保險存檔
-   ══════════════════════════════════════════ */
+function importFromJSON(text) {
+  const obj = JSON.parse(text);
+  const d = obj.data || obj;
+  if (!Array.isArray(d.segments) || !Array.isArray(d.plan)) throw new Error('JSON 格式不正確');
+
+  const newSegments = d.segments.map(s => ({
+    id: s.id || nid(), group: s.group || '', from: String(s.from || '').trim(),
+    to: String(s.to || '').trim(), up: Number(s.up) || 0, down: Number(s.down) || Number(s.up) || 0
+  })).filter(s => s.from && s.to && s.up > 0);
+
+  const validIds = new Set(newSegments.map(s => s.id));
+  const newPlan = [];
+  let dropped = 0;
+  for (const p of d.plan) {
+    if (!p || !p.kind) continue;
+    if (p.kind === 'daybreak' || p.kind === 'rest') {
+      newPlan.push({ ...p, id: p.id || nid() });
+    } else if (p.kind === 'seg') {
+      if (validIds.has(p.segId)) newPlan.push({ ...p, id: p.id || nid() });
+      else dropped++;
+    }
+  }
+
+  state.segments   = newSegments;
+  state.plan       = newPlan;
+  state.dayStarts  = d.dayStarts || { 1: '08:00' };
+  state.dayGlobalSpeeds = d.dayGlobalSpeeds || {};
+  state.startPoint = d.startPoint || null;
+  state.speed      = Number(d.speed) || 1;
+  state.activeDay  = Number(d.activeDay) || 1;
+  state.libSearch  = '';
+
+  if (state.dayStarts && state.dayStarts[0] !== undefined) {
+    state.dayStarts[1] = state.dayStarts[0];
+    delete state.dayStarts[0];
+  }
+
+  const segCnt = state.segments.length;
+  const tripCnt = state.plan.filter(p => p.kind === 'seg').length;
+  let msg = `✓ 已載入 JSON 行程：${segCnt} 筆路段、${tripCnt} 段行程`;
+  if (dropped > 0) msg += `（${dropped} 段因路段缺失被略過）`;
+  setMsg(msg, 3500);
+}
+
+function importFromCSV(text) {
+  const rows = parseCSV(text.replace(/^\uFEFF/, ''));
+  if (rows.length < 2) throw new Error('CSV 檔案為空或格式錯誤');
+
+  const header = rows[0];
+  if (!header.includes('行程內容')) throw new Error('找不到「行程內容」欄位，請確認是本站匯出的 Excel。');
+
+  const colIdx = {
+    day: header.indexOf('天數'),
+    content: header.indexOf('行程內容'),
+    speed: header.indexOf('上河係數'),
+    dur: header.indexOf('時長(分)'),
+    start: header.indexOf('起點時間')
+  };
+
+  if (colIdx.day === -1 || colIdx.content === -1 || colIdx.dur === -1) {
+    throw new Error('CSV 欄位缺失');
+  }
+
+  state.segments = [];
+  state.plan = [];
+  state.dayStarts = {};
+
+  let currentDay = 0;
+  
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.length <= colIdx.content) continue;
+
+    const dayStr = row[colIdx.day];
+    const content = row[colIdx.content];
+    const speedStr = colIdx.speed !== -1 ? row[colIdx.speed] : '-';
+    const durStr = row[colIdx.dur];
+    const startStr = colIdx.start !== -1 ? row[colIdx.start] : '';
+
+    const dayMatch = dayStr.match(/Day\s*(\d+)/i);
+    if (!dayMatch) continue;
+    const dayNum = parseInt(dayMatch[1], 10);
+
+    if (dayNum > currentDay) {
+      if (currentDay > 0) {
+        state.plan.push({ id: nid(), kind: 'daybreak' });
+      }
+      currentDay = dayNum;
+      state.dayStarts[dayNum] = startStr || '08:00';
+    }
+
+    if (content === '起登') continue;
+
+    if (content.startsWith('☕')) {
+      const label = content.replace(/^☕\s*/, '').trim();
+      const dur = parseInt(durStr, 10) || 0;
+      state.plan.push({ id: nid(), kind: 'rest', label, minutes: dur });
+    } else if (content.includes('→')) {
+      const parts = content.split('→').map(s => s.trim());
+      if (parts.length !== 2) continue;
+      const from = parts[0];
+      const to = parts[1];
+      
+      let speed = parseFloat(speedStr);
+      if (isNaN(speed)) speed = 1;
+      
+      const dur = parseInt(durStr, 10) || 0;
+
+      // 尋找或建立路段
+      let seg = state.segments.find(s => s.from === from && s.to === to);
+      if (!seg) {
+        const upTime = Math.max(1, Math.round(dur / speed));
+        seg = { id: nid(), group: '匯入路段', from, to, up: upTime, down: upTime };
+        state.segments.push(seg);
+      }
+
+      state.plan.push({ id: nid(), kind: 'seg', segId: seg.id, dir: 1, speed: speed });
+    }
+  }
+
+  state.speed = 1;
+  state.activeDay = currentDay || 1;
+  state.startPoint = null;
+  state.dayGlobalSpeeds = {};
+
+  setMsg(`✓ 已載入 Excel 行程：${state.segments.length} 筆路段、${state.plan.filter(p=>p.kind==='seg').length} 段行程`, 3500);
+}
+
+/* 自訂 CSV 解析器 (處理引號內的逗號) */
+function parseCSV(text) {
+  const rows = [];
+  let curRow = [];
+  let curCell = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i+1];
+    
+    if (inQuotes) {
+      if (c === '"' && next === '"') {
+        curCell += '"';
+        i++;
+      } else if (c === '"') {
+        inQuotes = false;
+      } else {
+        curCell += c;
+      }
+    } else {
+      if (c === '"') {
+        inQuotes = true;
+      } else if (c === ',') {
+        curRow.push(curCell);
+        curCell = '';
+      } else if (c === '\n' || c === '\r') {
+        if (c === '\r' && next === '\n') i++;
+        curRow.push(curCell);
+        if (curRow.length > 1 || curRow[0] !== '') {
+          rows.push(curRow);
+        }
+        curRow = [];
+        curCell = '';
+      } else {
+        curCell += c;
+      }
+    }
+  }
+  if (curCell !== '' || curRow.length > 0) {
+    curRow.push(curCell);
+    rows.push(curRow);
+  }
+  return rows;
+}
+
 window.addEventListener('beforeunload', () => { save(); });
 window.addEventListener('pagehide', () => { save(); });
 
-/* ══════════════════════════════════════════
-   初始化
-   ══════════════════════════════════════════ */
 load();
-$('#speed').value = state.speed;
+$('#nextSpeed').value = state.speed;
 $('#libSearch').value = state.libSearch;
 commit();
 
