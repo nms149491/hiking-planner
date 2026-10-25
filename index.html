@@ -90,6 +90,18 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .pos-box{font-size:12.5px;color:#5c7a66;margin-bottom:8px;}
 .pos-box b{color:#2f5d3f;font-size:14px;}
 
+/* ★ 客製化下拉選單樣式 */
+.custom-select-wrapper { position: relative; flex: 1; font-size: 13px; font-family: inherit; }
+.custom-select-trigger { padding: 8px 10px; border: 1px solid #cdd8cf; border-radius: 6px; background: #fff; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; min-height: 37px; }
+.custom-select-trigger .arrow { font-size: 10px; color: #7d8f84; }
+.custom-options { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #cdd8cf; border-radius: 6px; margin-top: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.1); max-height: 200px; overflow-y: auto; z-index: 100; display: none; }
+.custom-options.open { display: block; }
+.custom-option { padding: 8px 10px; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid #f0f4f0; }
+.custom-option:last-child { border-bottom: none; }
+.custom-option:hover { background: #eef4ef; }
+.custom-option.selected { background: #e8f5e9; font-weight: 700; color: #2f5d3f; }
+.opt-group { color: #9aa8a0; font-size: 11px; font-weight: normal; }
+
 .control-bar{display:flex;gap:8px;margin-bottom:14px;}
 .control-bar button{flex:1;padding:8px;font-weight:600;background:#fafcfa;border:1px solid #e2e9e3;}
 
@@ -161,6 +173,22 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 
 .drag-handle{cursor: grab; display:flex; align-items:center; gap:4px;}
 .drag-handle::before{content:'☰'; color:#b3bfb7; font-size:14px;}
+
+/* ★ 手機版排版優化 (解決擠壓問題) */
+@media (max-width: 600px) {
+  .plan-item {
+    grid-template-columns: 40px 1fr 55px 40px 40px 24px;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+  .col-time { font-size: 11px; }
+  .col-content { font-size: 12px; white-space: normal; word-break: break-all; }
+  .col-dur { font-size: 11px; min-width: 30px; }
+  .col-dur input { width: 30px; font-size: 11px; }
+  .col-speed { font-size: 10px; }
+  .col-speed input { width: 30px; font-size: 11px; }
+  .day-header { flex-wrap: wrap; gap: 6px; }
+}
 
 .summary{font-size:12px;color:#4a6b57;background:#eef4ef;border-radius:8px;
          padding:10px 12px;line-height:1.8;font-variant-numeric:tabular-nums;margin-bottom:14px;}
@@ -264,16 +292,28 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
               <option value="">-- 所有分類 --</option>
             </select>
           </div>
+          
           <div class="dest-row">
             <div class="search-input-wrap">
               <input type="text" id="destSearch" class="dest-search" placeholder="🔍 搜尋地點...">
               <button id="clearDestSearch" class="btn-clear" title="清除搜尋">✕</button>
             </div>
           </div>
+
+          <div class="search-options" style="margin-bottom: 8px; margin-top: -4px;">
+            <label><input type="checkbox" id="destMatchCase"> 區分大小寫</label>
+            <label><input type="checkbox" id="destMatchWholeWord"> 全字拼寫</label>
+          </div>
+          
           <div class="dest-row">
-            <select id="destSelect" class="dest-select">
-              <option value="">-- 請先載入路段 --</option>
-            </select>
+            <div class="custom-select-wrapper">
+              <div class="custom-select-trigger" id="destSelectTrigger">
+                <span id="destSelectText">-- 請先載入路段 --</span>
+                <span class="arrow">▼</span>
+              </div>
+              <div class="custom-options" id="destSelectOptions"></div>
+              <input type="hidden" id="destSelect">
+            </div>
             <button id="addDestBtn" type="button">加入</button>
           </div>
           
@@ -293,7 +333,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
           <button id="clearPlan">清除行程</button>
         </div>
 
-        <!-- ★ 新增圖片顯示區塊 -->
         <div id="routeImageWrap">
           <img id="routeImage" src="" alt="路線示意圖">
         </div>
@@ -335,7 +374,7 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v20'; // 更新版號
+const KEY = 'hiking-planner-v24'; // 更新版號
 
 const state = {
   speed: 1,
@@ -346,6 +385,8 @@ const state = {
   libGroupFilter: '',
   libMatchCase: false,
   libMatchWholeWord: false,
+  destMatchCase: false,
+  destMatchWholeWord: false,
   segments: [],
   plan: [],
   activeDay: 1
@@ -410,17 +451,15 @@ function getAllGroups() {
   return Array.from(groups).sort();
 }
 
-const cleanStr = str => String(str || '').replace(/\s+/g, '').toLowerCase();
-
 /* ══════════════════════════════════════════
-   路段庫專用比對邏輯
+   通用比對邏輯
    ══════════════════════════════════════════ */
-function matchSegmentText(text, query) {
+function matchText(text, query, matchCase, matchWhole) {
   if (!query) return true;
   let t = String(text || '').replace(/\s+/g, '');
-  if (!state.libMatchCase) t = t.toLowerCase();
+  if (!matchCase) t = t.toLowerCase();
   
-  if (state.libMatchWholeWord) {
+  if (matchWhole) {
     return t === query;
   }
   return t.includes(query);
@@ -481,6 +520,8 @@ async function init() {
   if (state.libGroupFilter === undefined) state.libGroupFilter = '';
   if (state.libMatchCase === undefined) state.libMatchCase = false;
   if (state.libMatchWholeWord === undefined) state.libMatchWholeWord = false;
+  if (state.destMatchCase === undefined) state.destMatchCase = false;
+  if (state.destMatchWholeWord === undefined) state.destMatchWholeWord = false;
   if (state.activeDay === undefined || state.activeDay < 1) state.activeDay = 1;
   if (!Array.isArray(state.plan)) state.plan = [];
   
@@ -498,6 +539,8 @@ async function init() {
   $('#libGroupFilter').value = state.libGroupFilter;
   $('#libMatchCase').checked = state.libMatchCase;
   $('#libMatchWholeWord').checked = state.libMatchWholeWord;
+  $('#destMatchCase').checked = state.destMatchCase;
+  $('#destMatchWholeWord').checked = state.destMatchWholeWord;
   commit();
 
   if (raw && (state.segments.length > 0 || state.plan.length > 0)) {
@@ -578,56 +621,119 @@ function validatePlan() {
 }
 
 /* ══════════════════════════════════════════
-   目的地下拉
+   目的地下拉（客製化與搜尋優化）
    ══════════════════════════════════════════ */
+function getLocationGroup(loc) {
+  const seg = state.segments.find(s => s.from === loc || s.to === loc);
+  return seg ? seg.group : '未分類';
+}
+
 function updateDestSelect() {
   const pos = currentPos();
   const groupVal = $('#destGroup').value;
-  const searchVal = cleanStr($('#destSearch').value);
-  const select = $('#destSelect');
-  const prevVal = select.value;
+  const searchVal = $('#destSearch').value;
+  const matchCase = $('#destMatchCase').checked;
+  const matchWhole = $('#destMatchWholeWord').checked;
+  
+  const optionsContainer = $('#destSelectOptions');
+  const trigger = $('#destSelectTrigger');
+  const hiddenInput = $('#destSelect');
+  const prevVal = hiddenInput.value;
   
   const nextSpeed = parseFloat($('#nextSpeed').value) || 1;
+  let options = [];
 
   if (pos === null && !state.startPoint) {
     const nodes = new Set();
-    state.segments.forEach(s => {
-      if (!groupVal || s.group === groupVal) {
+    if (groupVal) {
+      state.segments.forEach(s => {
+        if (s.group === groupVal) {
+          nodes.add(s.from); nodes.add(s.to);
+        }
+      });
+    } else {
+      state.segments.forEach(s => {
         nodes.add(s.from); nodes.add(s.to);
-      }
-    });
-    let options = Array.from(nodes).sort();
-    if (searchVal) options = options.filter(n => cleanStr(n).includes(searchVal));
-    
-    select.innerHTML = options.length
-      ? options.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
-      : '<option value="">-- 沒有符合的地點 --</option>';
+      });
+    }
+    options = Array.from(nodes).sort().map(n => ({ dest: n, isStart: true }));
     $('#posBox').innerHTML = `請先選擇起點`;
   } else {
     const startNode = pos !== null ? pos : state.startPoint;
     const r = findRoutes(startNode);
-    let options = [];
     for (const dest in r) {
       if (dest === startNode) continue;
-      options.push({ dest, dist: r[dest].dist, path: r[dest].path });
+      options.push({ dest, dist: r[dest].dist, path: r[dest].path, isStart: false });
     }
     
-    if (groupVal) options = options.filter(o => o.path.some(p => p.seg.group === groupVal));
+    // 嚴格過濾分類：只保留「目的地本身」屬於該分類的選項
+    if (groupVal) {
+      const locationsInGroup = new Set();
+      state.segments.forEach(s => {
+        if (s.group === groupVal) {
+          locationsInGroup.add(s.from);
+          locationsInGroup.add(s.to);
+        }
+      });
+      options = options.filter(o => locationsInGroup.has(o.dest));
+    }
     
-    if (searchVal) options = options.filter(o => cleanStr(o.dest).includes(searchVal));
     options.sort((a, b) => a.dist - b.dist);
-    
-    select.innerHTML = options.length
-      ? options.map(o => `<option value="${esc(o.dest)}">${esc(o.dest)} (${Math.round(o.dist * nextSpeed)}分)</option>`).join('')
-      : '<option value="">-- 沒有符合的路線 --</option>';
-      
     $('#posBox').innerHTML = pos !== null
       ? `目前位置：<b>${esc(pos)}</b>`
       : `起點：<b>${esc(state.startPoint)}</b> (尚未出發)`;
   }
 
-  if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
-    select.value = prevVal;
+  // 過濾搜尋
+  if (searchVal) {
+    const q = searchVal.replace(/\s+/g, '');
+    options = options.filter(o => matchText(o.dest, q, matchCase, matchWhole));
+  }
+
+  // 渲染客製化選單
+  let html = '';
+  if (options.length === 0) {
+    html = '<div class="custom-option" style="color:#9aa8a0; cursor:default;">-- 沒有符合的路線 --</div>';
+  } else {
+    options.forEach(o => {
+      // 決定要顯示的分類標籤
+      let groupName = '';
+      if (groupVal) {
+        groupName = groupVal; // 若有選分類，強制顯示該分類
+      } else {
+        groupName = getLocationGroup(o.dest); // 未選分類時，抓取該地點預設的分類
+      }
+      
+      const isSelected = o.dest === prevVal;
+      const label = o.isStart ? o.dest : `${esc(o.dest)} (${Math.round(o.dist * nextSpeed)}分)`;
+      
+      html += `<div class="custom-option ${isSelected ? 'selected' : ''}" data-value="${esc(o.dest)}">
+        <span>${label}</span>
+        <span class="opt-group">- ${esc(groupName)}</span>
+      </div>`;
+    });
+  }
+  optionsContainer.innerHTML = html;
+
+  // 更新 trigger 文字
+  if (prevVal) {
+    const matchedOpt = options.find(o => o.dest === prevVal);
+    if (matchedOpt) {
+      let groupName = '';
+      if (groupVal) {
+        groupName = groupVal;
+      } else {
+        groupName = getLocationGroup(matchedOpt.dest);
+      }
+      
+      const label = matchedOpt.isStart ? matchedOpt.dest : `${esc(matchedOpt.dest)} (${Math.round(matchedOpt.dist * nextSpeed)}分)`;
+      trigger.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</span> <span class="opt-group">- ${esc(groupName)}</span> <span class="arrow" style="margin-left:4px;">▼</span>`;
+    } else {
+      hiddenInput.value = '';
+      trigger.innerHTML = `<span style="color:#9aa8a0;">-- 請選擇 --</span> <span class="arrow">▼</span>`;
+    }
+  } else {
+    trigger.innerHTML = `<span style="color:#9aa8a0;">-- ${options.length === 0 ? '沒有符合路線' : '請選擇'} --</span> <span class="arrow">▼</span>`;
   }
   
   updateRouteImage();
@@ -644,10 +750,7 @@ function updateRouteImage() {
   let targetGroup = groupVal;
   
   if (!targetGroup && destVal) {
-    const seg = state.segments.find(s => s.from === destVal || s.to === destVal);
-    if (seg) {
-      targetGroup = seg.group;
-    }
+    targetGroup = getLocationGroup(destVal);
   }
   
   if (targetGroup && IMAGE_MAP[targetGroup]) {
@@ -715,6 +818,7 @@ imgWrap.addEventListener('mousemove', (e) => {
   magnifier.style.left = (e.clientX + 15) + 'px';
   magnifier.style.top = (e.clientY + 15) + 'px';
 });
+
 
 /* ══════════════════════════════════════════
    時間計算
@@ -968,9 +1072,9 @@ function renderLib() {
     if (filterGroup && s.group !== filterGroup) return false;
     if (!q) return true;
     
-    return matchSegmentText(s.from, q) ||
-           matchSegmentText(s.to, q) ||
-           matchSegmentText(s.group, q);
+    return matchText(s.from, q, state.libMatchCase, state.libMatchWholeWord) ||
+           matchText(s.to, q, state.libMatchCase, state.libMatchWholeWord) ||
+           matchText(s.group, q, state.libMatchCase, state.libMatchWholeWord);
   });
   
   if (!filtered.length) {
@@ -992,8 +1096,11 @@ function renderLib() {
   sortedGroups.forEach(g => {
     const list = grouped[g];
     
-    let isOpen = (q || filterGroup) ? 'open' : '';
-    if (collapsedGroups.has(g)) isOpen = '';
+    // ★ 修正：預設為收合，只有在有搜尋或選擇分類時才展開（且未被手動收合）
+    let isOpen = '';
+    if ((q || filterGroup) && !collapsedGroups.has(g)) {
+      isOpen = 'open';
+    }
 
     html += `<details class="lib-group" data-group="${esc(g)}" ${isOpen}>
       <summary>${esc(g)}<span class="group-count">${list.length}</span></summary>
@@ -1110,7 +1217,7 @@ document.addEventListener('click', e => {
 });
 
 /* ══════════════════════════════════════════
-   事件：加入行程
+   事件：加入行程 (與客製化下拉選單)
    ══════════════════════════════════════════ */
 $('#addDestBtn').addEventListener('click', () => {
   const val = $('#destSelect').value;
@@ -1159,6 +1266,29 @@ $('#addDestBtn').addEventListener('click', () => {
 $('#clearDestSearch').addEventListener('click', () => {
   $('#destSearch').value = '';
   updateDestSelect();
+});
+
+// 客製化下拉選單的事件綁定
+$('#destSelectTrigger').addEventListener('click', (e) => {
+  e.stopPropagation();
+  $('#destSelectOptions').classList.toggle('open');
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.custom-select-wrapper')) {
+    $('#destSelectOptions').classList.remove('open');
+  }
+});
+
+$('#destSelectOptions').addEventListener('click', (e) => {
+  const option = e.target.closest('.custom-option');
+  if (!option || option.style.cursor === 'default') return;
+  
+  const val = option.dataset.value;
+  $('#destSelect').value = val;
+  
+  updateDestSelect(); 
+  $('#destSelectOptions').classList.remove('open');
 });
 
 /* ══════════════════════════════════════════
@@ -1289,7 +1419,19 @@ document.addEventListener('change', e => {
     renderLib();
   }
 
-  if (t.id === 'destGroup' || t.id === 'destSearch' || t.id === 'nextSpeed' || t.id === 'destSelect') {
+  // 加入行程的搜尋選項變更
+  if (t.id === 'destMatchCase') {
+    state.destMatchCase = t.checked;
+    save();
+    updateDestSelect();
+  }
+  if (t.id === 'destMatchWholeWord') {
+    state.destMatchWholeWord = t.checked;
+    save();
+    updateDestSelect();
+  }
+
+  if (t.id === 'destGroup' || t.id === 'destSearch' || t.id === 'nextSpeed') {
     updateDestSelect();
   }
 });
@@ -1444,6 +1586,11 @@ $('#loadPresetSeg').addEventListener('click', async () => {
   state.activeDay = 1;
   collapsedGroups.clear();
   
+  state.libSearch = '';
+  state.libGroupFilter = '';
+  $('#libSearch').value = '';
+  $('#libGroupFilter').value = '';
+
   resetSegForm();
   commit();
   showLibMsg(`✓ 已載入預設上河資料（共 ${state.segments.length} 筆路段）`);
@@ -1486,6 +1633,8 @@ $('#newTrip').addEventListener('click', () => {
   state.libGroupFilter = '';
   state.libMatchCase = false;
   state.libMatchWholeWord = false;
+  state.destMatchCase = false;
+  state.destMatchWholeWord = false;
   state.activeDay  = 1;
   collapsedGroups.clear();
 
@@ -1498,6 +1647,8 @@ $('#newTrip').addEventListener('click', () => {
   $('#libGroupFilter').value = '';
   $('#libMatchCase').checked = false;
   $('#libMatchWholeWord').checked = false;
+  $('#destMatchCase').checked = false;
+  $('#destMatchWholeWord').checked = false;
   $('#destGroup').value = '';
   $('#destSearch').value = '';
 
@@ -1561,6 +1712,9 @@ $('#fileSeg').addEventListener('change', e => {
       state.startPoint = null;
       state.activeDay = 1;
       state.libGroupFilter = '';
+      state.libSearch = '';
+      $('#libSearch').value = '';
+      $('#libGroupFilter').value = '';
       collapsedGroups.clear();
       resetSegForm();
       commit();
@@ -1762,8 +1916,12 @@ $('#importFileInput').addEventListener('change', e => {
       state.libGroupFilter = '';
       state.libMatchCase = false;
       state.libMatchWholeWord = false;
+      state.destMatchCase = false;
+      state.destMatchWholeWord = false;
       $('#libMatchCase').checked = false;
       $('#libMatchWholeWord').checked = false;
+      $('#destMatchCase').checked = false;
+      $('#destMatchWholeWord').checked = false;
       collapsedGroups.clear();
       resetSegForm();
       commit();
