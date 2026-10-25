@@ -427,7 +427,7 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v33'; // 更新版號
+const KEY = 'hiking-planner-v35'; // 更新版號
 
 const state = {
   speed: 1,
@@ -1470,6 +1470,13 @@ document.addEventListener('input', e => {
     renderLib();
     return;
   }
+
+  // ★ 目的地搜尋：input 事件即時刷新
+  if (e.target.id === 'destSearch') {
+    updateDestSelect();
+    return;
+  }
+
   const t  = e.target;
   const li = t.closest('li[data-id]');
   if (!li) return;
@@ -1548,7 +1555,8 @@ document.addEventListener('change', e => {
     updateDestSelect();
   }
 
-  if (t.id === 'destGroup' || t.id === 'destSearch' || t.id === 'nextSpeed') {
+  // ★ 保留 destSearch 的 change 監聽，作為 autocomplete/自動填充的保險
+  if (t.id === 'destSearch' || t.id === 'destGroup' || t.id === 'nextSpeed') {
     updateDestSelect();
   }
 });
