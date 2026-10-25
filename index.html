@@ -41,14 +41,23 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
                 width:100%;font-family:inherit;}
 .lib-form button{grid-column:1/-1;padding:7px;font-weight:600;background:#2f5d3f;color:#fff;border-color:#2f5d3f;}
 .lib-form button:hover{background:#3d7452;}
-.file-bar{display:flex;gap:8px;margin-bottom:6px;}
-.file-bar button{flex:1;padding:6px;}
+.file-bar{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.file-bar button{flex:1;padding:6px; min-width:80px;}
 .lib-ref{font-size:12px;color:#5c7a66;margin-bottom:12px;display:block;}
 .lib-ref a{color:#2f5d3f;text-decoration:none;font-weight:600;}
 .lib-ref a:hover{text-decoration:underline;}
-.search-box{width:100%;padding:8px 12px;border:1px solid #d3ddd5;border-radius:8px;
-            font-size:13px;margin-bottom:10px;font-family:inherit;background:#fafcfa;}
-.search-box:focus{outline:none;border-color:#2f5d3f;}
+
+/* 搜尋區塊排版 */
+.lib-search-wrap { display: flex; gap: 6px; margin-bottom: 6px; }
+.lib-search-wrap select { flex: 0 0 120px; padding: 8px; font-size: 13px; border: 1px solid #d3ddd5; border-radius: 8px; background: #fafcfa; font-family: inherit; }
+.lib-search-wrap input { flex: 1; padding: 8px 12px; border: 1px solid #d3ddd5; border-radius: 8px; font-size: 13px; font-family: inherit; background: #fafcfa; }
+.lib-search-wrap select:focus, .lib-search-wrap input:focus { outline: none; border-color: #2f5d3f; }
+
+/* 搜尋選項 Checkbox 排版 */
+.search-options { display: flex; gap: 12px; font-size: 12px; margin-bottom: 10px; color: #5c7a66; align-items: center; flex-wrap: wrap; }
+.search-options label { display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none; }
+.search-options input[type="checkbox"] { margin: 0; cursor: pointer; }
+
 .lib-group{border:1px solid #e2e9e3;border-radius:9px;overflow:hidden;margin-bottom:8px;}
 .lib-group > summary{font-weight:700;font-size:13px;padding:9px 12px;cursor:pointer;
                      background:#f4f7f5;display:flex;align-items:center;list-style:none;outline:none;}
@@ -83,6 +92,37 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 
 .control-bar{display:flex;gap:8px;margin-bottom:14px;}
 .control-bar button{flex:1;padding:8px;font-weight:600;background:#fafcfa;border:1px solid #e2e9e3;}
+
+/* ★ 圖片顯示區塊與放大鏡 */
+#routeImageWrap {
+  margin-bottom: 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  border: 1px solid #e2e9e3;
+  display: none;
+  background: #fff;
+  width: 100%;
+  cursor: crosshair;
+}
+#routeImage {
+  width: 100%;
+  display: block;
+  height: auto;
+  border-radius: 7px;
+}
+#magnifier {
+  position: fixed;
+  border: 3px solid #2f5d3f;
+  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  pointer-events: none;
+  display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4), inset 0 0 10px rgba(0,0,0,.1);
+  background-color: #fff;
+  background-repeat: no-repeat;
+  z-index: 9999;
+}
 
 /* ── 訊息提示 ── */
 .msg{padding:0;font-size:13px;text-align:center;transition:.2s;}
@@ -168,14 +208,27 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
           <button id="fCancel" hidden>取消編輯</button>
         </div>
         <div class="file-bar">
-          <button id="dlSeg">⬇ 下載路段檔</button>
-          <button id="upSeg">⬆ 載入路段檔</button>
+          <button id="dlSeg">⬇ 下載路段</button>
+          <button id="upSeg">⬆ 載入路段</button>
+          <button id="loadPresetSeg" style="background:#e8f5e9; border-color:#b7dcc0; font-weight:700; flex: 100%;">📥 載入預設上河資料</button>
           <input type="file" id="fileSeg" accept=".json,.csv" hidden>
         </div>
         <div class="lib-ref">
           上河圖參考網址：<a href="https://www.sunriver.com.tw/step2020.htm" target="_blank">https://www.sunriver.com.tw/step2020.htm</a>
         </div>
-        <input type="search" id="libSearch" class="search-box" placeholder="🔍 搜尋路段或分類...">
+        
+        <div class="lib-search-wrap">
+          <select id="libGroupFilter">
+            <option value="">所有分類</option>
+          </select>
+          <input type="search" id="libSearch" placeholder="🔍 搜尋路段...">
+        </div>
+
+        <div class="search-options">
+          <label><input type="checkbox" id="libMatchCase"> 區分大小寫</label>
+          <label><input type="checkbox" id="libMatchWholeWord"> 全字拼寫</label>
+        </div>
+        
         <div id="libList"></div>
       </div>
     </details>
@@ -191,7 +244,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 
         <div id="summary" class="summary"></div>
 
-        <!-- ★ 按鈕：複製 / 匯出 JSON / 匯出 Excel / 匯入 -->
         <div id="exportWrap" style="margin-bottom:20px;">
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button id="export" class="btn-primary" style="flex:2; min-width:120px;">📋 複製行程表</button>
@@ -202,7 +254,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
           </div>
         </div>
 
-        <!-- 加入行程區塊 -->
         <div class="dest-panel">
           <label>📍 加入行程 / 前往目的地</label>
           
@@ -242,6 +293,11 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
           <button id="clearPlan">清除行程</button>
         </div>
 
+        <!-- ★ 新增圖片顯示區塊 -->
+        <div id="routeImageWrap">
+          <img id="routeImage" src="" alt="路線示意圖">
+        </div>
+
         <div id="msg" class="msg"></div>
       </div>
     </section>
@@ -249,10 +305,37 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 </main>
 
 <script>
+/* 圖片對照表 */
+const IMAGE_MAP = {
+  "玉山群峰": "G02_hiking.jpg",
+  "郡大山": "G03_hiking.jpg",
+  "西巒大山": "G03_hiking.jpg",
+  "大霸聖稜武陵四秀": "G04_hiking.jpg",
+  "雪山西南稜": "G05_hiking.jpg",
+  "白姑大山": "G06_hiking.jpg",
+  "北一段": "G07_hiking_new.jpg",
+  "北二段": "G08_hiking.jpg",
+  "合歡群峰": "G09_hiking_new.jpg",
+  "奇萊": "G09_hiking_new.jpg",
+  "屏風山": "G09_hiking_new.jpg",
+  "太魯閣山列": "G10_hiking.jpg",
+  "能高越嶺": "G11_hiking.jpg",
+  "能高安東軍": "G12_hiking.jpg",
+  "干卓萬群峰": "G13_hiking.jpg",
+  "丹大山列": "G14_hiking.jpg",
+  "丹大東郡": "G15_hiking.jpg",
+  "馬博拉斯橫斷": "G16_hiking.jpg",
+  "南二段": "G17_hiking.jpg",
+  "新康橫斷": "G18_hiking.jpg",
+  "南一段": "G19_hiking.jpg",
+  "北大武山": "G20_hiking.jpg"
+};
+const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
+
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v16';
+const KEY = 'hiking-planner-v20'; // 更新版號
 
 const state = {
   speed: 1,
@@ -260,6 +343,9 @@ const state = {
   dayStarts: { 1: '08:00' },
   startPoint: null,
   libSearch: '',
+  libGroupFilter: '',
+  libMatchCase: false,
+  libMatchWholeWord: false,
   segments: [],
   plan: [],
   activeDay: 1
@@ -276,6 +362,8 @@ let pageMsgTimer = null;
 let exportMsgTimer = null;
 let newTripPending = false;
 let newTripTimer = null;
+
+let collapsedGroups = new Set(); 
 
 /* ══════════════════════════════════════════
    工具函式
@@ -322,6 +410,22 @@ function getAllGroups() {
   return Array.from(groups).sort();
 }
 
+const cleanStr = str => String(str || '').replace(/\s+/g, '').toLowerCase();
+
+/* ══════════════════════════════════════════
+   路段庫專用比對邏輯
+   ══════════════════════════════════════════ */
+function matchSegmentText(text, query) {
+  if (!query) return true;
+  let t = String(text || '').replace(/\s+/g, '');
+  if (!state.libMatchCase) t = t.toLowerCase();
+  
+  if (state.libMatchWholeWord) {
+    return t === query;
+  }
+  return t.includes(query);
+}
+
 /* ══════════════════════════════════════════
    儲存 / 讀取
    ══════════════════════════════════════════ */
@@ -334,14 +438,36 @@ function save() {
   }
 }
 
-function load() {
+async function loadPresetData() {
+  try {
+    const response = await fetch('./hiking-segments.json');
+    if (!response.ok) throw new Error('無法載入檔案');
+    const data = await response.json();
+    return data.segments || [];
+  } catch (err) {
+    console.warn('自動載入預設資料失敗：', err);
+    if (window.location.protocol === 'file:') {
+      setMsg('⚠️ 無法載入預設資料，請確保使用伺服器環境（如 Live Server）', 5000);
+    }
+    return [];
+  }
+}
+
+async function init() {
   let raw = null;
   try { raw = localStorage.getItem(KEY); } catch (e) {}
   if (!raw) {
     try { raw = sessionStorage.getItem(KEY); } catch (e) {}
   }
+  
   if (raw) {
     try { Object.assign(state, JSON.parse(raw)); } catch (e) {}
+  } else {
+    const presets = await loadPresetData();
+    if (presets.length > 0) {
+      state.segments = presets.map(s => ({ id: nid(), ...s }));
+      setMsg('✓ 已自動載入預設上河路段庫', 3500);
+    }
   }
 
   if (state.dayStarts && state.dayStarts[0] !== undefined) {
@@ -352,9 +478,34 @@ function load() {
   if (!state.dayGlobalSpeeds) state.dayGlobalSpeeds = {};
   if (state.startPoint === undefined) state.startPoint = null;
   if (state.libSearch === undefined) state.libSearch = '';
+  if (state.libGroupFilter === undefined) state.libGroupFilter = '';
+  if (state.libMatchCase === undefined) state.libMatchCase = false;
+  if (state.libMatchWholeWord === undefined) state.libMatchWholeWord = false;
   if (state.activeDay === undefined || state.activeDay < 1) state.activeDay = 1;
   if (!Array.isArray(state.plan)) state.plan = [];
+  
   if (!Array.isArray(state.segments)) state.segments = [];
+  
+  state.segments.forEach(s => {
+    if (s.up !== undefined && s.go === undefined) s.go = s.up;
+    if (s.down !== undefined && s.back === undefined) s.back = s.down;
+    delete s.up;
+    delete s.down;
+  });
+
+  $('#nextSpeed').value = state.speed;
+  $('#libSearch').value = state.libSearch;
+  $('#libGroupFilter').value = state.libGroupFilter;
+  $('#libMatchCase').checked = state.libMatchCase;
+  $('#libMatchWholeWord').checked = state.libMatchWholeWord;
+  commit();
+
+  if (raw && (state.segments.length > 0 || state.plan.length > 0)) {
+    const parts = [];
+    if (state.segments.length > 0) parts.push(`路段 ${state.segments.length} 筆`);
+    if (state.plan.length > 0) parts.push(`行程 ${state.plan.length} 項`);
+    setMsg(`✓ 已載入本機儲存的資料（${parts.join('、')}）`, 3500);
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -365,8 +516,8 @@ function findRoutes(startNode) {
   state.segments.forEach(s => {
     if (!graph[s.from]) graph[s.from] = [];
     if (!graph[s.to]) graph[s.to] = [];
-    graph[s.from].push({ to: s.to, weight: s.up, seg: s, dir: 1 });
-    graph[s.to].push({ to: s.from, weight: s.down, seg: s, dir: -1 });
+    graph[s.from].push({ to: s.to, weight: s.go, seg: s, dir: 1 });
+    graph[s.to].push({ to: s.from, weight: s.back, seg: s, dir: -1 });
   });
 
   const res = {};
@@ -432,7 +583,7 @@ function validatePlan() {
 function updateDestSelect() {
   const pos = currentPos();
   const groupVal = $('#destGroup').value;
-  const searchVal = $('#destSearch').value.toLowerCase();
+  const searchVal = cleanStr($('#destSearch').value);
   const select = $('#destSelect');
   const prevVal = select.value;
   
@@ -446,7 +597,7 @@ function updateDestSelect() {
       }
     });
     let options = Array.from(nodes).sort();
-    if (searchVal) options = options.filter(n => n.toLowerCase().includes(searchVal));
+    if (searchVal) options = options.filter(n => cleanStr(n).includes(searchVal));
     
     select.innerHTML = options.length
       ? options.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
@@ -463,7 +614,7 @@ function updateDestSelect() {
     
     if (groupVal) options = options.filter(o => o.path.some(p => p.seg.group === groupVal));
     
-    if (searchVal) options = options.filter(o => o.dest.toLowerCase().includes(searchVal));
+    if (searchVal) options = options.filter(o => cleanStr(o.dest).includes(searchVal));
     options.sort((a, b) => a.dist - b.dist);
     
     select.innerHTML = options.length
@@ -478,7 +629,92 @@ function updateDestSelect() {
   if (prevVal && Array.from(select.options).some(o => o.value === prevVal)) {
     select.value = prevVal;
   }
+  
+  updateRouteImage();
 }
+
+/* 更新路線圖片 */
+function updateRouteImage() {
+  const wrap = $('#routeImageWrap');
+  const img = $('#routeImage');
+  
+  const groupVal = $('#destGroup').value;
+  const destVal = $('#destSelect').value;
+  
+  let targetGroup = groupVal;
+  
+  if (!targetGroup && destVal) {
+    const seg = state.segments.find(s => s.from === destVal || s.to === destVal);
+    if (seg) {
+      targetGroup = seg.group;
+    }
+  }
+  
+  if (targetGroup && IMAGE_MAP[targetGroup]) {
+    const url = BASE_IMG_URL + IMAGE_MAP[targetGroup];
+    if (img.src !== url) {
+      img.src = url;
+    }
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+/* 圖片放大鏡邏輯 */
+const imgWrap = $('#routeImageWrap');
+const img = $('#routeImage');
+
+const magnifier = document.createElement('div');
+magnifier.id = 'magnifier';
+document.body.appendChild(magnifier);
+
+let zoomLevel = 2;
+let magSize = 150;
+
+function updateMagSize() {
+  if (!img.naturalWidth) return;
+  const rect = img.getBoundingClientRect();
+  magnifier.style.backgroundSize = `${rect.width * zoomLevel}px ${rect.height * zoomLevel}px`;
+}
+
+img.addEventListener('load', updateMagSize);
+window.addEventListener('resize', updateMagSize);
+
+imgWrap.addEventListener('mouseenter', () => {
+  if (img.src) {
+    magnifier.style.display = 'block';
+    updateMagSize();
+  }
+});
+
+imgWrap.addEventListener('mouseleave', () => {
+  magnifier.style.display = 'none';
+});
+
+imgWrap.addEventListener('mousemove', (e) => {
+  if (!img.src || !img.naturalWidth) return;
+  
+  const rect = img.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+    magnifier.style.display = 'none';
+    return;
+  }
+  
+  magnifier.style.display = 'block';
+  magnifier.style.backgroundImage = `url(${img.src})`;
+  
+  const bgX = -x * zoomLevel + magSize / 2;
+  const bgY = -y * zoomLevel + magSize / 2;
+  
+  magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
+  
+  magnifier.style.left = (e.clientX + 15) + 'px';
+  magnifier.style.top = (e.clientY + 15) + 'px';
+});
 
 /* ══════════════════════════════════════════
    時間計算
@@ -499,7 +735,7 @@ function computePlan() {
     if (it.kind === 'seg') {
       const s = segById(it.segId);
       if (!s) continue;
-      const base  = it.dir === 1 ? s.up : s.down;
+      const base  = it.dir === 1 ? s.go : s.back;
       
       const dayGlobal = state.dayGlobalSpeeds[day] || 1;
       const currentSpeed = (it.speed !== undefined && it.speed !== null) ? it.speed : dayGlobal;
@@ -709,9 +945,8 @@ function renderPlanAndTime() {
 function updateExportButtons() {
   const hasPlan = state.plan.length > 0;
   $('#export').disabled      = !hasPlan;
-  $('#exportFile').disabled  = !hasPlan; // 修改：與其他匯出按鈕同步，無行程時禁用
+  $('#exportFile').disabled  = !hasPlan;
   $('#exportExcel').disabled = !hasPlan;
-  // 匯入 (#importFile) 永遠可用
 }
 
 /* ══════════════════════════════════════════
@@ -723,13 +958,21 @@ function renderLib() {
     el.innerHTML = '<div class="empty">尚無路段<br>請在上方新增，或載入路段檔</div>';
     return;
   }
-  const q = state.libSearch.toLowerCase();
+  
+  let q = String(state.libSearch || '').replace(/\s+/g, '');
+  if (!state.libMatchCase) q = q.toLowerCase();
+  
+  const filterGroup = state.libGroupFilter;
+  
   const filtered = state.segments.filter(s => {
+    if (filterGroup && s.group !== filterGroup) return false;
     if (!q) return true;
-    return (s.from && s.from.toLowerCase().includes(q)) ||
-           (s.to && s.to.toLowerCase().includes(q)) ||
-           (s.group && s.group.toLowerCase().includes(q));
+    
+    return matchSegmentText(s.from, q) ||
+           matchSegmentText(s.to, q) ||
+           matchSegmentText(s.group, q);
   });
+  
   if (!filtered.length) {
     el.innerHTML = '<div class="empty">找不到符合條件的路段</div>';
     return;
@@ -748,8 +991,11 @@ function renderLib() {
   });
   sortedGroups.forEach(g => {
     const list = grouped[g];
-    const isOpen = q ? 'open' : '';
-    html += `<details class="lib-group" ${isOpen}>
+    
+    let isOpen = (q || filterGroup) ? 'open' : '';
+    if (collapsedGroups.has(g)) isOpen = '';
+
+    html += `<details class="lib-group" data-group="${esc(g)}" ${isOpen}>
       <summary>${esc(g)}<span class="group-count">${list.length}</span></summary>
       <div class="lib-items-wrap">`;
     html += list.map(s => `
@@ -761,21 +1007,48 @@ function renderLib() {
               <button class="x" data-act="delSeg" title="刪除">✕</button>
             </span>
           </div>
-          <div class="lib-time">去程 ${s.up} 分　<span class="muted">回程 ${s.down} 分</span></div>
+          <div class="lib-time">去程 ${s.go} 分　<span class="muted">回程 ${s.back} 分</span></div>
         </div>`).join('');
     html += `</div></details>`;
   });
   el.innerHTML = html;
 }
 
+// 監聽 toggle 事件（需使用捕獲階段），記錄使用者的手動操作
+$('#libList').addEventListener('toggle', e => {
+  if (e.target.tagName.toLowerCase() === 'details') {
+    const g = e.target.dataset.group;
+    if (!g) return;
+    if (e.target.open) {
+      collapsedGroups.delete(g);
+    } else {
+      collapsedGroups.add(g);
+    }
+  }
+}, true);
+
 function renderGroupList() {
   const groups = getAllGroups();
+  
   $('#groupList').innerHTML = groups.map(g => `<option value="${esc(g)}">`).join('');
+  
   const destGroupEl = $('#destGroup');
   const curVal = destGroupEl.value;
   destGroupEl.innerHTML = `<option value="">-- 所有分類 --</option>` +
     groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
   destGroupEl.value = curVal;
+
+  const libFilterEl = $('#libGroupFilter');
+  const curFilter = state.libGroupFilter;
+  libFilterEl.innerHTML = `<option value="">所有分類</option>` +
+    groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  
+  if (curFilter && groups.includes(curFilter)) {
+    libFilterEl.value = curFilter;
+  } else if (curFilter && !groups.includes(curFilter)) {
+    state.libGroupFilter = '';
+    libFilterEl.value = '';
+  }
 }
 
 function commit() {
@@ -810,8 +1083,8 @@ document.addEventListener('click', e => {
     $('#fGroup').value = s.group || '';
     $('#fFrom').value = s.from;
     $('#fTo').value   = s.to;
-    $('#fUp').value   = s.up;
-    $('#fDown').value = s.down;
+    $('#fUp').value   = s.go;
+    $('#fDown').value = s.back;
     $('#fAdd').textContent = '✔ 更新路段';
     $('#fCancel').hidden = false;
     $('#fFrom').focus();
@@ -942,6 +1215,9 @@ document.addEventListener('dragend', e => {
    ══════════════════════════════════════════ */
 document.addEventListener('input', e => {
   if (e.target.id === 'libSearch') {
+    if (state.libSearch !== e.target.value) {
+      collapsedGroups.clear();
+    }
     state.libSearch = e.target.value;
     save();
     renderLib();
@@ -995,7 +1271,25 @@ document.addEventListener('change', e => {
     }
   }
 
-  if (t.id === 'destGroup' || t.id === 'destSearch' || t.id === 'nextSpeed') {
+  if (t.id === 'libGroupFilter') {
+    state.libGroupFilter = t.value;
+    collapsedGroups.clear();
+    save();
+    renderLib();
+  }
+
+  if (t.id === 'libMatchCase') {
+    state.libMatchCase = t.checked;
+    save();
+    renderLib();
+  }
+  if (t.id === 'libMatchWholeWord') {
+    state.libMatchWholeWord = t.checked;
+    save();
+    renderLib();
+  }
+
+  if (t.id === 'destGroup' || t.id === 'destSearch' || t.id === 'nextSpeed' || t.id === 'destSelect') {
     updateDestSelect();
   }
 });
@@ -1015,24 +1309,24 @@ $('#fAdd').addEventListener('click', () => {
   const group = $('#fGroup').value.trim();
   const from  = $('#fFrom').value.trim();
   const to    = $('#fTo').value.trim();
-  const up    = parseInt($('#fUp').value, 10);
-  let down    = parseInt($('#fDown').value, 10);
+  const go    = parseInt($('#fUp').value, 10);
+  let back    = parseInt($('#fDown').value, 10);
 
-  if (!from || !to || !(up > 0)) {
+  if (!from || !to || !(go > 0)) {
     setMsg('請填寫起點、終點，以及 A→B 的分鐘數');
     return;
   }
-  if (isNaN(down) || down <= 0) down = up;
+  if (isNaN(back) || back <= 0) back = go;
 
   if (editingSegId) {
     const s = segById(editingSegId);
-    if (s) { s.group = group; s.from = from; s.to = to; s.up = up; s.down = down; }
+    if (s) { s.group = group; s.from = from; s.to = to; s.go = go; s.back = back; }
     validatePlan();
     resetSegForm();
     commit();
     setMsg(`已更新路段：${from} → ${to}`);
   } else {
-    state.segments.push({ id: nid(), group, from, to, up, down });
+    state.segments.push({ id: nid(), group, from, to, go, back });
     resetSegForm();
     commit();
     setMsg(`已新增路段：${from} → ${to}`);
@@ -1129,6 +1423,33 @@ $('#nextSpeed').addEventListener('input', (e) => {
 });
 
 /* ══════════════════════════════════════════
+   ★ 載入預設上河資料按鈕
+   ══════════════════════════════════════════ */
+$('#loadPresetSeg').addEventListener('click', async () => {
+  if (state.segments.length > 0) {
+    if (!confirm('載入預設上河資料將會覆蓋目前的路段庫，且已排好的行程會被清空，確定嗎？')) {
+      return;
+    }
+  }
+  
+  const presets = await loadPresetData();
+  if (presets.length === 0) {
+    setMsg('無法載入預設資料，請確認 hiking-segments.json 存在', 3500);
+    return;
+  }
+  
+  state.segments = presets.map(s => ({ id: nid(), ...s }));
+  state.plan = [];
+  state.startPoint = null;
+  state.activeDay = 1;
+  collapsedGroups.clear();
+  
+  resetSegForm();
+  commit();
+  showLibMsg(`✓ 已載入預設上河資料（共 ${state.segments.length} 筆路段）`);
+});
+
+/* ══════════════════════════════════════════
    新的行程
    ══════════════════════════════════════════ */
 $('#newTrip').addEventListener('click', () => {
@@ -1162,7 +1483,11 @@ $('#newTrip').addEventListener('click', () => {
   state.dayGlobalSpeeds = {};
   state.speed      = 1;
   state.libSearch  = '';
+  state.libGroupFilter = '';
+  state.libMatchCase = false;
+  state.libMatchWholeWord = false;
   state.activeDay  = 1;
+  collapsedGroups.clear();
 
   try { localStorage.removeItem(KEY); } catch (e) {}
   try { sessionStorage.removeItem(KEY); } catch (e) {}
@@ -1170,6 +1495,9 @@ $('#newTrip').addEventListener('click', () => {
   resetSegForm();
   $('#nextSpeed').value = 1;
   $('#libSearch').value = '';
+  $('#libGroupFilter').value = '';
+  $('#libMatchCase').checked = false;
+  $('#libMatchWholeWord').checked = false;
   $('#destGroup').value = '';
   $('#destSearch').value = '';
 
@@ -1183,7 +1511,7 @@ $('#newTrip').addEventListener('click', () => {
 $('#dlSeg').addEventListener('click', () => {
   const data = {
     type: 'hiking-segments', version: 1,
-    segments: state.segments.map(s => ({ group: s.group || '', from: s.from, to: s.to, up: s.up, down: s.down }))
+    segments: state.segments.map(s => ({ group: s.group || '', from: s.from, to: s.to, go: s.go, back: s.back }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1200,9 +1528,9 @@ function parseSegmentJSON(text) {
     group: String(s.group || s['分類'] || '').trim(),
     from: String(s.from || s['起點'] || '').trim(),
     to:   String(s.to   || s['終點'] || '').trim(),
-    up:   Number(s.up   ?? s['去程'] ?? 0),
-    down: Number(s.down ?? s['回程'] ?? s.up ?? 0)
-  })).filter(s => s.from && s.to && s.up > 0);
+    go:   Number(s.go   ?? s.up   ?? s['去程'] ?? 0),
+    back: Number(s.back ?? s.down ?? s['回程'] ?? s.go ?? s.up ?? 0)
+  })).filter(s => s.from && s.to && s.go > 0);
 }
 function parseSegmentCSV(text) {
   const rows = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -1210,9 +1538,9 @@ function parseSegmentCSV(text) {
   rows.forEach((line, i) => {
     const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
     if (i === 0 && /起點|from/i.test(cols[0])) return;
-    const [group, from, to, up, down] = cols;
-    const upN = Number(up), downN = Number(down) || upN;
-    if (from && to && upN > 0) out.push({ group, from, to, up: upN, down: downN });
+    const [group, from, to, go, back] = cols;
+    const goN = Number(go), backN = Number(back) || goN;
+    if (from && to && goN > 0) out.push({ group, from, to, go: goN, back: backN });
   });
   return out;
 }
@@ -1228,10 +1556,12 @@ $('#fileSeg').addEventListener('change', e => {
       const text = String(reader.result);
       const segs = /\.csv$/i.test(f.name) ? parseSegmentCSV(text) : parseSegmentJSON(text);
       if (!segs.length) throw new Error('檔案中沒有有效的路段');
-      state.segments = segs.map(s => ({ id: nid(), group: s.group, from: s.from, to: s.to, up: s.up, down: s.down }));
+      state.segments = segs.map(s => ({ id: nid(), group: s.group, from: s.from, to: s.to, go: s.go, back: s.back }));
       state.plan = [];
       state.startPoint = null;
       state.activeDay = 1;
+      state.libGroupFilter = '';
+      collapsedGroups.clear();
       resetSegForm();
       commit();
       showLibMsg(`已載入 ${state.segments.length} 筆路段`);
@@ -1340,9 +1670,8 @@ function showCopyDialog(text) {
   ta.select();
 }
 
-/* ★ 匯出 JSON */
 $('#exportFile').addEventListener('click', () => {
-  if (state.plan.length === 0) { // 修改：與其他按鈕同步，無行程時顯示提示
+  if (state.plan.length === 0) {
     setMsg('目前沒有行程可匯出');
     return;
   }
@@ -1356,7 +1685,7 @@ $('#exportFile').addEventListener('click', () => {
       dayStarts: state.dayStarts,
       startPoint: state.startPoint,
       segments: state.segments.map(s => ({
-        id: s.id, group: s.group || '', from: s.from, to: s.to, up: s.up, down: s.down
+        id: s.id, group: s.group || '', from: s.from, to: s.to, go: s.go, back: s.back
       })),
       plan: state.plan.map(p => ({ ...p })),
       activeDay: state.activeDay
@@ -1374,7 +1703,6 @@ $('#exportFile').addEventListener('click', () => {
   setMsg('✓ 已匯出行程檔');
 });
 
-/* ★ 匯出 Excel (CSV) */
 $('#exportExcel').addEventListener('click', () => {
   const rows = computePlan();
   if (state.plan.length === 0) {
@@ -1386,7 +1714,6 @@ $('#exportExcel').addEventListener('click', () => {
 
   for (const r of rows) {
     if (r.kind === 'day') {
-      // 新增起登時間列
       const startStr = getDayStart(r.day);
       csv += `Day ${r.day},${startStr},${startStr},起登,-,0\n`;
     } else if (r.kind === 'seg') {
@@ -1409,7 +1736,7 @@ $('#exportExcel').addEventListener('click', () => {
 });
 
 /* ══════════════════════════════════════════
-   ★ 匯入 (自動判斷 JSON 或 CSV)
+   匯入 (自動判斷 JSON 或 CSV)
    ══════════════════════════════════════════ */
 $('#importFile').addEventListener('click', () => $('#importFileInput').click());
 
@@ -1429,8 +1756,15 @@ $('#importFileInput').addEventListener('change', e => {
       // 共用更新
       $('#nextSpeed').value = state.speed;
       $('#libSearch').value = '';
+      $('#libGroupFilter').value = '';
       $('#destGroup').value = '';
       $('#destSearch').value = '';
+      state.libGroupFilter = '';
+      state.libMatchCase = false;
+      state.libMatchWholeWord = false;
+      $('#libMatchCase').checked = false;
+      $('#libMatchWholeWord').checked = false;
+      collapsedGroups.clear();
       resetSegForm();
       commit();
 
@@ -1449,8 +1783,8 @@ function importFromJSON(text) {
 
   const newSegments = d.segments.map(s => ({
     id: s.id || nid(), group: s.group || '', from: String(s.from || '').trim(),
-    to: String(s.to || '').trim(), up: Number(s.up) || 0, down: Number(s.down) || Number(s.up) || 0
-  })).filter(s => s.from && s.to && s.up > 0);
+    to: String(s.to || '').trim(), go: Number(s.go ?? s.up) || 0, back: Number(s.back ?? s.down) || Number(s.go ?? s.up) || 0
+  })).filter(s => s.from && s.to && s.go > 0);
 
   const validIds = new Set(newSegments.map(s => s.id));
   const newPlan = [];
@@ -1473,6 +1807,7 @@ function importFromJSON(text) {
   state.speed      = Number(d.speed) || 1;
   state.activeDay  = Number(d.activeDay) || 1;
   state.libSearch  = '';
+  state.libGroupFilter = '';
 
   if (state.dayStarts && state.dayStarts[0] !== undefined) {
     state.dayStarts[1] = state.dayStarts[0];
@@ -1508,6 +1843,7 @@ function importFromCSV(text) {
   state.segments = [];
   state.plan = [];
   state.dayStarts = {};
+  state.libGroupFilter = '';
 
   let currentDay = 0;
   
@@ -1550,11 +1886,10 @@ function importFromCSV(text) {
       
       const dur = parseInt(durStr, 10) || 0;
 
-      // 尋找或建立路段
       let seg = state.segments.find(s => s.from === from && s.to === to);
       if (!seg) {
-        const upTime = Math.max(1, Math.round(dur / speed));
-        seg = { id: nid(), group: '匯入路段', from, to, up: upTime, down: upTime };
+        const goTime = Math.max(1, Math.round(dur / speed));
+        seg = { id: nid(), group: '匯入路段', from, to, go: goTime, back: goTime };
         state.segments.push(seg);
       }
 
@@ -1619,17 +1954,7 @@ function parseCSV(text) {
 window.addEventListener('beforeunload', () => { save(); });
 window.addEventListener('pagehide', () => { save(); });
 
-load();
-$('#nextSpeed').value = state.speed;
-$('#libSearch').value = state.libSearch;
-commit();
-
-if (state.segments.length > 0 || state.plan.length > 0) {
-  const parts = [];
-  if (state.segments.length > 0) parts.push(`路段 ${state.segments.length} 筆`);
-  if (state.plan.length > 0) parts.push(`行程 ${state.plan.length} 項`);
-  setMsg(`✓ 已載入本機儲存的資料（${parts.join('、')}）`, 3500);
-}
+init();
 </script>
 </body>
 </html>
