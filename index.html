@@ -218,7 +218,8 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 
 <main>
   <div>
-    <details class="panel" id="libPanel" open>
+    <!-- ★ 修正：移除 open 屬性，讓預設面板收合 -->
+    <details class="panel" id="libPanel">
       <summary class="panel-header">
         <h2>① 路段庫（上河 1.0 基準）</h2>
         <span class="icon">▼</span>
@@ -374,7 +375,7 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v24'; // 更新版號
+const KEY = 'hiking-planner-v25'; // 更新版號
 
 const state = {
   speed: 1,
@@ -1096,7 +1097,7 @@ function renderLib() {
   sortedGroups.forEach(g => {
     const list = grouped[g];
     
-    // ★ 修正：預設為收合，只有在有搜尋或選擇分類時才展開（且未被手動收合）
+    // ★ 預設為收合，只有在有搜尋或選擇分類時才展開（且未被手動收合）
     let isOpen = '';
     if ((q || filterGroup) && !collapsedGroups.has(g)) {
       isOpen = 'open';
