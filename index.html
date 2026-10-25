@@ -102,6 +102,46 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .custom-option.selected { background: #e8f5e9; font-weight: 700; color: #2f5d3f; }
 .opt-group { color: #9aa8a0; font-size: 11px; font-weight: normal; }
 
+/* ★ 快速加入區塊 */
+#nextStepsContainer {
+  margin-top: 12px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.step-chip {
+  background: #fff;
+  border: 1px solid #cdd8cf;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #2f5d3f;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.step-chip:hover {
+  background: #2f5d3f;
+  color: #fff;
+  border-color: #2f5d3f;
+}
+.step-chip::before {
+  content: '＋';
+  font-size: 11px;
+  opacity: 0.7;
+}
+.chip-label {
+  font-size: 12px;
+  color: #5c7a66;
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: -2px;
+}
+
 .control-bar{display:flex;gap:8px;margin-bottom:14px;}
 .control-bar button{flex:1;padding:8px;font-weight:600;background:#fafcfa;border:1px solid #e2e9e3;}
 
@@ -316,6 +356,9 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
             </div>
             <button id="addDestBtn" type="button">加入</button>
           </div>
+
+          <!-- ★ 快速加入 Icon 區塊 -->
+          <div id="nextStepsContainer"></div>
           
           <div class="dest-row" style="margin-top:8px;">
             <label style="font-size:13px; font-weight:700; color:#2f5d3f; margin:0; display:flex; align-items:center; gap:8px; width:100%;">
@@ -347,6 +390,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 /* 圖片對照表 */
 const IMAGE_MAP = {
   "玉山群峰": "G02_hiking.jpg",
+  "八通關越嶺": "G02_hiking.jpg",
   "郡大山": "G03_hiking.jpg",
   "西巒大山": "G03_hiking.jpg",
   "大霸聖稜武陵四秀": "G04_hiking.jpg",
@@ -354,6 +398,7 @@ const IMAGE_MAP = {
   "白姑大山": "G06_hiking.jpg",
   "北一段": "G07_hiking_new.jpg",
   "北二段": "G08_hiking.jpg",
+  "畢祿羊頭連峰縱走": "G08_hiking.jpg",
   "合歡群峰": "G09_hiking_new.jpg",
   "奇萊": "G09_hiking_new.jpg",
   "屏風山": "G09_hiking_new.jpg",
@@ -374,7 +419,7 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v26'; // 更新版號
+const KEY = 'hiking-planner-v29'; // 更新版號
 
 const state = {
   speed: 1,
@@ -621,7 +666,7 @@ function validatePlan() {
 }
 
 /* ══════════════════════════════════════════
-   目的地下拉（客製化與搜尋優化）
+   目的地下拉與快速加入
    ══════════════════════════════════════════ */
 function getLocationGroup(loc) {
   const seg = state.segments.find(s => s.from === loc || s.to === loc);
@@ -641,32 +686,43 @@ function updateDestSelect() {
   const prevVal = hiddenInput.value;
   
   const nextSpeed = parseFloat($('#nextSpeed').value) || 1;
-  let options = [];
+  let options = [];          // 下拉選單：所有可達點
+  let adjacentOptions = [];  // 快速加入：僅直連點
 
   if (pos === null && !state.startPoint) {
     const nodes = new Set();
-    if (groupVal) {
-      state.segments.forEach(s => {
-        if (s.group === groupVal) {
-          nodes.add(s.from); nodes.add(s.to);
-        }
-      });
-    } else {
-      state.segments.forEach(s => {
+    state.segments.forEach(s => {
+      if (!groupVal || s.group === groupVal) {
         nodes.add(s.from); nodes.add(s.to);
-      });
-    }
+      }
+    });
     options = Array.from(nodes).sort().map(n => ({ dest: n, isStart: true }));
+    adjacentOptions = options;
     $('#posBox').innerHTML = `請先選擇起點`;
   } else {
     const startNode = pos !== null ? pos : state.startPoint;
+    
+    // 1. 找出所有可達點 (供下拉選單)
     const r = findRoutes(startNode);
     for (const dest in r) {
       if (dest === startNode) continue;
       options.push({ dest, dist: r[dest].dist, path: r[dest].path, isStart: false });
     }
     
-    // 嚴格過濾分類：只保留「目的地本身」屬於該分類的選項
+    // 2. 找出直連點 (供快速加入) ★ 修正：使用 startNode 而非 pos
+    const seen = new Set();
+    state.segments.forEach(s => {
+      if (s.from === startNode && !seen.has(s.to)) {
+        seen.add(s.to);
+        adjacentOptions.push({ dest: s.to, dist: s.go, path: [{ seg: s, dir: 1 }], isStart: false });
+      }
+      if (s.to === startNode && !seen.has(s.from)) {
+        seen.add(s.from);
+        adjacentOptions.push({ dest: s.from, dist: s.back, path: [{ seg: s, dir: -1 }], isStart: false });
+      }
+    });
+    
+    // 分類過濾
     if (groupVal) {
       const locationsInGroup = new Set();
       state.segments.forEach(s => {
@@ -676,37 +732,33 @@ function updateDestSelect() {
         }
       });
       options = options.filter(o => locationsInGroup.has(o.dest));
+      adjacentOptions = adjacentOptions.filter(o => locationsInGroup.has(o.dest));
     }
     
     options.sort((a, b) => a.dist - b.dist);
+    adjacentOptions.sort((a, b) => a.dist - b.dist);
+    
     $('#posBox').innerHTML = pos !== null
       ? `目前位置：<b>${esc(pos)}</b>`
       : `起點：<b>${esc(state.startPoint)}</b> (尚未出發)`;
   }
 
-  // 過濾搜尋
+  // 搜尋過濾
   if (searchVal) {
     const q = searchVal.replace(/\s+/g, '');
     options = options.filter(o => matchText(o.dest, q, matchCase, matchWhole));
+    adjacentOptions = adjacentOptions.filter(o => matchText(o.dest, q, matchCase, matchWhole));
   }
 
-  // 渲染客製化選單
+  // 渲染下拉選單
   let html = '';
   if (options.length === 0) {
     html = '<div class="custom-option" style="color:#9aa8a0; cursor:default;">-- 沒有符合的路線 --</div>';
   } else {
     options.forEach(o => {
-      // 決定要顯示的分類標籤
-      let groupName = '';
-      if (groupVal) {
-        groupName = groupVal; // 若有選分類，強制顯示該分類
-      } else {
-        groupName = getLocationGroup(o.dest); // 未選分類時，抓取該地點預設的分類
-      }
-      
+      let groupName = groupVal || getLocationGroup(o.dest);
       const isSelected = o.dest === prevVal;
       const label = o.isStart ? o.dest : `${esc(o.dest)} (${Math.round(o.dist * nextSpeed)}分)`;
-      
       html += `<div class="custom-option ${isSelected ? 'selected' : ''}" data-value="${esc(o.dest)}">
         <span>${label}</span>
         <span class="opt-group">- ${esc(groupName)}</span>
@@ -719,13 +771,7 @@ function updateDestSelect() {
   if (prevVal) {
     const matchedOpt = options.find(o => o.dest === prevVal);
     if (matchedOpt) {
-      let groupName = '';
-      if (groupVal) {
-        groupName = groupVal;
-      } else {
-        groupName = getLocationGroup(matchedOpt.dest);
-      }
-      
+      let groupName = groupVal || getLocationGroup(matchedOpt.dest);
       const label = matchedOpt.isStart ? matchedOpt.dest : `${esc(matchedOpt.dest)} (${Math.round(matchedOpt.dist * nextSpeed)}分)`;
       trigger.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</span> <span class="opt-group">- ${esc(groupName)}</span> <span class="arrow" style="margin-left:4px;">▼</span>`;
     } else {
@@ -734,6 +780,21 @@ function updateDestSelect() {
     }
   } else {
     trigger.innerHTML = `<span style="color:#9aa8a0;">-- ${options.length === 0 ? '沒有符合路線' : '請選擇'} --</span> <span class="arrow">▼</span>`;
+  }
+
+  // 渲染快速加入 Chips (使用 adjacentOptions)
+  const chipsContainer = $('#nextStepsContainer');
+  if (adjacentOptions.length > 0) {
+    let chipsHtml = '<div class="chip-label">⚡ 點擊快速加入：</div>';
+    adjacentOptions.slice(0, 20).forEach(o => {
+      chipsHtml += `<div class="step-chip" data-val="${esc(o.dest)}">${esc(o.dest)}</div>`;
+    });
+    if (adjacentOptions.length > 20) {
+      chipsHtml += `<div style="font-size:11px; color:#9aa8a0; align-self:center;">...還有 ${adjacentOptions.length - 20} 個</div>`;
+    }
+    chipsContainer.innerHTML = chipsHtml;
+  } else {
+    chipsContainer.innerHTML = '';
   }
   
   updateRouteImage();
@@ -1096,7 +1157,6 @@ function renderLib() {
   sortedGroups.forEach(g => {
     const list = grouped[g];
     
-    // ★ 預設為收合，只有在有搜尋或選擇分類時才展開（且未被手動收合）
     let isOpen = '';
     if ((q || filterGroup) && !collapsedGroups.has(g)) {
       isOpen = 'open';
@@ -1217,10 +1277,9 @@ document.addEventListener('click', e => {
 });
 
 /* ══════════════════════════════════════════
-   事件：加入行程 (與客製化下拉選單)
+   加入行程共用邏輯
    ══════════════════════════════════════════ */
-$('#addDestBtn').addEventListener('click', () => {
-  const val = $('#destSelect').value;
+function addLocationToPlan(val) {
   if (!val) {
     setMsg('請先選擇目的地');
     return;
@@ -1258,8 +1317,21 @@ $('#addDestBtn').addEventListener('click', () => {
     state.startPoint = null;
     validatePlan();
     commit();
+    setMsg(`已加入路線至 ${val}`);
   } else {
     setMsg('找不到從目前位置到該目的地的路線');
+  }
+}
+
+$('#addDestBtn').addEventListener('click', () => {
+  addLocationToPlan($('#destSelect').value);
+});
+
+// ★ 快速加入 Icon 的事件綁定
+$('#nextStepsContainer').addEventListener('click', (e) => {
+  const chip = e.target.closest('.step-chip');
+  if (chip) {
+    addLocationToPlan(chip.dataset.val);
   }
 });
 
@@ -1419,7 +1491,6 @@ document.addEventListener('change', e => {
     renderLib();
   }
 
-  // 加入行程的搜尋選項變更
   if (t.id === 'destMatchCase') {
     state.destMatchCase = t.checked;
     save();
@@ -1761,7 +1832,7 @@ $('#export').addEventListener('click', () => {
     let lastTo = '';
     for (const r of g.items) {
       if (r.kind === 'seg') {
-        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分\n`; // ★ 移除了 (上河 ${r.speed})
+        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分\n`;
         lastEnd = r.end;
         lastTo = r.to;
       } else if (r.kind === 'rest') {
