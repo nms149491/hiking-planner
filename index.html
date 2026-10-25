@@ -218,7 +218,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 
 <main>
   <div>
-    <!-- ★ 修正：移除 open 屬性，讓預設面板收合 -->
     <details class="panel" id="libPanel">
       <summary class="panel-header">
         <h2>① 路段庫（上河 1.0 基準）</h2>
@@ -375,7 +374,7 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v25'; // 更新版號
+const KEY = 'hiking-planner-v26'; // 更新版號
 
 const state = {
   speed: 1,
@@ -1762,7 +1761,7 @@ $('#export').addEventListener('click', () => {
     let lastTo = '';
     for (const r of g.items) {
       if (r.kind === 'seg') {
-        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分 (上河 ${r.speed})\n`;
+        txt += `${fmtPlain(r.start)}  ${r.from} → ${r.to}  ${r.dur}分\n`; // ★ 移除了 (上河 ${r.speed})
         lastEnd = r.end;
         lastTo = r.to;
       } else if (r.kind === 'rest') {
