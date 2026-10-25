@@ -1,6 +1,6 @@
 {
   "type": "hiking-segments",
-  "version": 1,
+  "version": 1.1,
   "segments": [
     {
       "group": "玉山群峰",
@@ -1971,7 +1971,7 @@
     },
     {
       "group": "北二段",
-      "from": "11.7K行車終點",
+      "from": "17.5K登山口",
       "to": "23.2K登山口",
       "go": 140,
       "back": 120
