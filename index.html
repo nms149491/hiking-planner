@@ -67,7 +67,11 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .lib-group > summary:hover{background:#eef4ef;}
 .group-count{font-size:11px;background:#e2e9e3;color:#5c7a66;padding:1px 6px;border-radius:10px;margin-left:auto;}
 .lib-items-wrap{padding:8px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #e2e9e3;background:#fff;}
-.lib-item{border:1px solid #f0f4f0;border-radius:7px;padding:8px 10px;background:#fafcfa;}
+
+/* ★ 路段項目可點擊預覽 */
+.lib-item{border:1px solid #f0f4f0;border-radius:7px;padding:8px 10px;background:#fafcfa;cursor:pointer;transition:all 0.15s;}
+.lib-item:hover{border-color:#b7dcc0;background:#eef4ef;}
+
 .lib-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .lib-name{font-size:13px;font-weight:600;}
 .lib-time{font-size:11.5px;color:#5c7a66;margin-top:2px;}
@@ -146,8 +150,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .control-bar button{flex:1;padding:8px;font-weight:600;background:#fafcfa;border:1px solid #e2e9e3;}
 
 /* ★ 圖片顯示區塊與放大鏡 */
-#routeImageWrap {
-  margin-bottom: 14px;
+#routeImageWrap, #libImageWrap {
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,.1);
   border: 1px solid #e2e9e3;
@@ -155,12 +158,13 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
   background: #fff;
   width: 100%;
   cursor: crosshair;
+  overflow: hidden;
+  margin-bottom: 14px;
 }
-#routeImage {
+#routeImage, #libImage {
   width: 100%;
   display: block;
   height: auto;
-  border-radius: 7px;
 }
 #magnifier {
   position: fixed;
@@ -214,7 +218,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .drag-handle{cursor: grab; display:flex; align-items:center; gap:4px;}
 .drag-handle::before{content:'☰'; color:#b3bfb7; font-size:14px;}
 
-/* ★ 手機版排版優化 (解決擠壓問題) */
+/* ★ 手機版排版優化 */
 @media (max-width: 600px) {
   .plan-item {
     grid-template-columns: 40px 1fr 55px 40px 40px 24px;
@@ -298,6 +302,10 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
         </div>
         
         <div id="libList"></div>
+
+        <div id="libImageWrap">
+          <img id="libImage" src="" alt="路段示意圖">
+        </div>
       </div>
     </details>
   </div>
@@ -419,7 +427,7 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v29'; // 更新版號
+const KEY = 'hiking-planner-v33'; // 更新版號
 
 const state = {
   speed: 1,
@@ -686,8 +694,8 @@ function updateDestSelect() {
   const prevVal = hiddenInput.value;
   
   const nextSpeed = parseFloat($('#nextSpeed').value) || 1;
-  let options = [];          // 下拉選單：所有可達點
-  let adjacentOptions = [];  // 快速加入：僅直連點
+  let options = [];
+  let adjacentOptions = [];
 
   if (pos === null && !state.startPoint) {
     const nodes = new Set();
@@ -702,14 +710,12 @@ function updateDestSelect() {
   } else {
     const startNode = pos !== null ? pos : state.startPoint;
     
-    // 1. 找出所有可達點 (供下拉選單)
     const r = findRoutes(startNode);
     for (const dest in r) {
       if (dest === startNode) continue;
       options.push({ dest, dist: r[dest].dist, path: r[dest].path, isStart: false });
     }
     
-    // 2. 找出直連點 (供快速加入) ★ 修正：使用 startNode 而非 pos
     const seen = new Set();
     state.segments.forEach(s => {
       if (s.from === startNode && !seen.has(s.to)) {
@@ -722,7 +728,6 @@ function updateDestSelect() {
       }
     });
     
-    // 分類過濾
     if (groupVal) {
       const locationsInGroup = new Set();
       state.segments.forEach(s => {
@@ -743,14 +748,12 @@ function updateDestSelect() {
       : `起點：<b>${esc(state.startPoint)}</b> (尚未出發)`;
   }
 
-  // 搜尋過濾
   if (searchVal) {
     const q = searchVal.replace(/\s+/g, '');
     options = options.filter(o => matchText(o.dest, q, matchCase, matchWhole));
     adjacentOptions = adjacentOptions.filter(o => matchText(o.dest, q, matchCase, matchWhole));
   }
 
-  // 渲染下拉選單
   let html = '';
   if (options.length === 0) {
     html = '<div class="custom-option" style="color:#9aa8a0; cursor:default;">-- 沒有符合的路線 --</div>';
@@ -767,7 +770,6 @@ function updateDestSelect() {
   }
   optionsContainer.innerHTML = html;
 
-  // 更新 trigger 文字
   if (prevVal) {
     const matchedOpt = options.find(o => o.dest === prevVal);
     if (matchedOpt) {
@@ -782,7 +784,6 @@ function updateDestSelect() {
     trigger.innerHTML = `<span style="color:#9aa8a0;">-- ${options.length === 0 ? '沒有符合路線' : '請選擇'} --</span> <span class="arrow">▼</span>`;
   }
 
-  // 渲染快速加入 Chips (使用 adjacentOptions)
   const chipsContainer = $('#nextStepsContainer');
   if (adjacentOptions.length > 0) {
     let chipsHtml = '<div class="chip-label">⚡ 點擊快速加入：</div>';
@@ -800,7 +801,7 @@ function updateDestSelect() {
   updateRouteImage();
 }
 
-/* 更新路線圖片 */
+/* 更新右側路線圖片 */
 function updateRouteImage() {
   const wrap = $('#routeImageWrap');
   const img = $('#routeImage');
@@ -825,10 +826,23 @@ function updateRouteImage() {
   }
 }
 
-/* 圖片放大鏡邏輯 */
-const imgWrap = $('#routeImageWrap');
-const img = $('#routeImage');
+/* ★ 更新左側路段庫圖片 */
+function updateLibImage(group) {
+  const wrap = $('#libImageWrap');
+  const img = $('#libImage');
+  
+  if (group && IMAGE_MAP[group]) {
+    const url = BASE_IMG_URL + IMAGE_MAP[group];
+    if (img.src !== url) {
+      img.src = url;
+    }
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
 
+/* 放大鏡共用邏輯 */
 const magnifier = document.createElement('div');
 magnifier.id = 'magnifier';
 document.body.appendChild(magnifier);
@@ -836,49 +850,59 @@ document.body.appendChild(magnifier);
 let zoomLevel = 2;
 let magSize = 150;
 
-function updateMagSize() {
-  if (!img.naturalWidth) return;
-  const rect = img.getBoundingClientRect();
-  magnifier.style.backgroundSize = `${rect.width * zoomLevel}px ${rect.height * zoomLevel}px`;
+function setupMagnifier(wrap, targetImg) {
+  targetImg.addEventListener('load', () => {
+    if (magnifier.style.display === 'block' && targetImg.naturalWidth) {
+      const rect = targetImg.getBoundingClientRect();
+      magnifier.style.backgroundSize = `${rect.width * zoomLevel}px ${rect.height * zoomLevel}px`;
+    }
+  });
+
+  wrap.addEventListener('mouseenter', () => {
+    if (targetImg.src) {
+      magnifier.style.display = 'block';
+      if (targetImg.naturalWidth) {
+        const rect = targetImg.getBoundingClientRect();
+        magnifier.style.backgroundSize = `${rect.width * zoomLevel}px ${rect.height * zoomLevel}px`;
+      }
+    }
+  });
+
+  wrap.addEventListener('mouseleave', () => {
+    magnifier.style.display = 'none';
+  });
+
+  wrap.addEventListener('mousemove', (e) => {
+    if (!targetImg.src || !targetImg.naturalWidth) return;
+    
+    const rect = targetImg.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
+      magnifier.style.display = 'none';
+      return;
+    }
+    
+    magnifier.style.display = 'block';
+    magnifier.style.backgroundImage = `url(${targetImg.src})`;
+    
+    const bgX = -x * zoomLevel + magSize / 2;
+    const bgY = -y * zoomLevel + magSize / 2;
+    
+    magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    
+    magnifier.style.left = (e.clientX + 15) + 'px';
+    magnifier.style.top = (e.clientY + 15) + 'px';
+  });
 }
 
-img.addEventListener('load', updateMagSize);
-window.addEventListener('resize', updateMagSize);
-
-imgWrap.addEventListener('mouseenter', () => {
-  if (img.src) {
-    magnifier.style.display = 'block';
-    updateMagSize();
-  }
-});
-
-imgWrap.addEventListener('mouseleave', () => {
+window.addEventListener('resize', () => {
   magnifier.style.display = 'none';
 });
 
-imgWrap.addEventListener('mousemove', (e) => {
-  if (!img.src || !img.naturalWidth) return;
-  
-  const rect = img.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  
-  if (x < 0 || y < 0 || x > rect.width || y > rect.height) {
-    magnifier.style.display = 'none';
-    return;
-  }
-  
-  magnifier.style.display = 'block';
-  magnifier.style.backgroundImage = `url(${img.src})`;
-  
-  const bgX = -x * zoomLevel + magSize / 2;
-  const bgY = -y * zoomLevel + magSize / 2;
-  
-  magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
-  
-  magnifier.style.left = (e.clientX + 15) + 'px';
-  magnifier.style.top = (e.clientY + 15) + 'px';
-});
+setupMagnifier($('#routeImageWrap'), $('#routeImage'));
+setupMagnifier($('#libImageWrap'), $('#libImage'));
 
 
 /* ══════════════════════════════════════════
@@ -1188,6 +1212,7 @@ $('#libList').addEventListener('toggle', e => {
     if (!g) return;
     if (e.target.open) {
       collapsedGroups.delete(g);
+      updateLibImage(g);
     } else {
       collapsedGroups.add(g);
     }
@@ -1276,6 +1301,19 @@ document.addEventListener('click', e => {
   }
 });
 
+/* ★ 路段庫點擊預覽圖片（不連動右側） */
+document.addEventListener('click', e => {
+  if (e.target.closest('button')) return;
+  const libItem = e.target.closest('.lib-item');
+  if (libItem && libItem.closest('#libList')) {
+    const id = libItem.dataset.id;
+    const seg = segById(id);
+    if (seg && seg.group) {
+      updateLibImage(seg.group);
+    }
+  }
+});
+
 /* ══════════════════════════════════════════
    加入行程共用邏輯
    ══════════════════════════════════════════ */
@@ -1288,6 +1326,7 @@ function addLocationToPlan(val) {
   if (currentPos() === null && !state.startPoint) {
     state.startPoint = val;
     save();
+    $('#destSearch').value = ''; // ★ 清空搜尋欄
     updateDestSelect();
     setMsg(`已設定起點：${val}`);
     return;
@@ -1316,6 +1355,7 @@ function addLocationToPlan(val) {
     state.plan.splice(insertIdx, 0, ...newItems);
     state.startPoint = null;
     validatePlan();
+    $('#destSearch').value = ''; // ★ 清空搜尋欄
     commit();
     setMsg(`已加入路線至 ${val}`);
   } else {
@@ -1331,7 +1371,12 @@ $('#addDestBtn').addEventListener('click', () => {
 $('#nextStepsContainer').addEventListener('click', (e) => {
   const chip = e.target.closest('.step-chip');
   if (chip) {
-    addLocationToPlan(chip.dataset.val);
+    const val = chip.dataset.val;
+    const grp = getLocationGroup(val);
+    if (grp) {
+      $('#destGroup').value = grp;
+    }
+    addLocationToPlan(val);
   }
 });
 
@@ -1478,6 +1523,7 @@ document.addEventListener('change', e => {
     collapsedGroups.clear();
     save();
     renderLib();
+    updateLibImage(t.value);
   }
 
   if (t.id === 'libMatchCase') {
