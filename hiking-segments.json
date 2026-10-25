@@ -1,6 +1,6 @@
 {
   "type": "hiking-segments",
-  "version": 1.1,
+  "version": 1.2,
   "segments": [
     {
       "group": "玉山群峰",
@@ -2215,7 +2215,7 @@
       "back": 130
     },
     {
-      "group": "合歡群峰",
+      "group": "屏風山",
       "from": "第一次過溪",
       "to": "鐵線吊橋",
       "go": 40,
