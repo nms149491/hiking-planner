@@ -20,16 +20,28 @@ button:hover{background:#e8f0e9;}
 button:active{transform:scale(.97);}
 button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
 
-main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-items:start;max-width:1400px;margin:0 auto;}
-@media(max-width:1000px){main{grid-template-columns:1fr;}}
+/* ★ 需求2：完全上下排列，限制最大寬度 */
+main{display:flex;flex-direction:column;gap:14px;padding:14px;align-items:stretch;max-width:1000px;margin:0 auto;}
 
-.panel{background:#fff;border-radius:12px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:14px;overflow:hidden;}
+.panel{background:#fff;border-radius:12px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:0;}
 .panel-header{padding:14px;border-bottom:1px solid #eef2ee;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
-.panel-header h2{font-size:14px;margin:0;color:#2f5d3f;letter-spacing:.06em;font-weight:700;}
+.panel-header h2{font-size:14px;margin:0;color:#2f5d3f;letter-spacing:.06em;font-weight:700;display:flex;align-items:center;gap:8px;}
 .panel-header .icon{font-size:12px;color:#7d8f84;transition:transform .2s;}
 .panel[open] .panel-header .icon{transform:rotate(180deg);}
 .panel-content{padding:14px;}
 .panel-fixed{padding:14px;}
+
+/* 版本號徽章 */
+.version-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #e8f5e9;
+  color: #2f5d3f;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid #b7dcc0;
+  letter-spacing: 0;
+}
 
 .list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
 .empty{color:#9aa8a0;font-size:13px;text-align:center;padding:16px 0;line-height:1.6;}
@@ -68,7 +80,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .group-count{font-size:11px;background:#e2e9e3;color:#5c7a66;padding:1px 6px;border-radius:10px;margin-left:auto;}
 .lib-items-wrap{padding:8px;display:flex;flex-direction:column;gap:6px;border-top:1px solid #e2e9e3;background:#fff;}
 
-/* ★ 路段項目可點擊預覽 */
+/* 路段項目可點擊預覽 */
 .lib-item{border:1px solid #f0f4f0;border-radius:7px;padding:8px 10px;background:#fafcfa;cursor:pointer;transition:all 0.15s;}
 .lib-item:hover{border-color:#b7dcc0;background:#eef4ef;}
 
@@ -94,7 +106,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .pos-box{font-size:12.5px;color:#5c7a66;margin-bottom:8px;}
 .pos-box b{color:#2f5d3f;font-size:14px;}
 
-/* ★ 客製化下拉選單樣式 */
+/* 客製化下拉選單樣式 */
 .custom-select-wrapper { position: relative; flex: 1; font-size: 13px; font-family: inherit; }
 .custom-select-trigger { padding: 8px 10px; border: 1px solid #cdd8cf; border-radius: 6px; background: #fff; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; min-height: 37px; }
 .custom-select-trigger .arrow { font-size: 10px; color: #7d8f84; }
@@ -106,7 +118,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
 .custom-option.selected { background: #e8f5e9; font-weight: 700; color: #2f5d3f; }
 .opt-group { color: #9aa8a0; font-size: 11px; font-weight: normal; }
 
-/* ★ 快速加入區塊 */
+/* 快速加入區塊 */
 #nextStepsContainer {
   margin-top: 12px;
   margin-bottom: 4px;
@@ -264,7 +276,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
   <div>
     <details class="panel" id="libPanel">
       <summary class="panel-header">
-        <h2>① 路段庫（上河 1.0 基準）</h2>
+        <h2>① 路段庫（上河 1.0 基準）<span id="libVersion" class="version-badge" style="display:none;"></span></h2>
         <span class="icon">▼</span>
       </summary>
       <div class="panel-content">
@@ -285,6 +297,12 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
           <button id="loadPresetSeg" style="background:#e8f5e9; border-color:#b7dcc0; font-weight:700; flex: 100%;">📥 載入預設上河資料</button>
           <input type="file" id="fileSeg" accept=".json,.csv" hidden>
         </div>
+
+        <!-- ★ 圖片顯示區塊已移到上河圖參考網址上方 -->
+        <div id="libImageWrap">
+          <img id="libImage" src="" alt="路段示意圖">
+        </div>
+
         <div class="lib-ref">
           上河圖參考網址：<a href="https://www.sunriver.com.tw/step2020.htm" target="_blank">https://www.sunriver.com.tw/step2020.htm</a>
         </div>
@@ -302,10 +320,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
         </div>
         
         <div id="libList"></div>
-
-        <div id="libImageWrap">
-          <img id="libImage" src="" alt="路段示意圖">
-        </div>
       </div>
     </details>
   </div>
@@ -313,7 +327,7 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
   <div>
     <section class="panel">
       <div class="panel-fixed">
-        <h2 style="font-size:14px;margin:0 0 12px;color:#2f5d3f;">② 行程編排設定</h2>
+        <h2 style="font-size:14px;margin:0 0 12px;color:#2f5d3f;">② 行程編排</h2>
 
         <div id="completedPlanList"></div>
         <div id="editingPlanList"></div>
@@ -365,7 +379,6 @@ main{display:grid;grid-template-columns:350px 1fr;gap:14px;padding:14px;align-it
             <button id="addDestBtn" type="button">加入</button>
           </div>
 
-          <!-- ★ 快速加入 Icon 區塊 -->
           <div id="nextStepsContainer"></div>
           
           <div class="dest-row" style="margin-top:8px;">
@@ -427,9 +440,10 @@ const BASE_IMG_URL = "https://www.sunriver.com.tw/images/hiking/";
 /* ══════════════════════════════════════════
    資料模型
    ══════════════════════════════════════════ */
-const KEY = 'hiking-planner-v35'; // 更新版號
+const KEY = 'hiking-planner-v39';
 
 const state = {
+  version: 1,
   speed: 1,
   dayGlobalSpeeds: {},
   dayStarts: { 1: '08:00' },
@@ -504,6 +518,19 @@ function getAllGroups() {
   return Array.from(groups).sort();
 }
 
+/* ★ 版本號徽章：路段庫為空時不顯示 */
+function updateVersionDisplay() {
+  const el = $('#libVersion');
+  if (!el) return;
+  if (Array.isArray(state.segments) && state.segments.length > 0) {
+    el.textContent = `v${state.version}`;
+    el.style.display = '';
+  } else {
+    el.textContent = '';
+    el.style.display = 'none';
+  }
+}
+
 /* ══════════════════════════════════════════
    通用比對邏輯
    ══════════════════════════════════════════ */
@@ -535,13 +562,16 @@ async function loadPresetData() {
     const response = await fetch('./hiking-segments.json');
     if (!response.ok) throw new Error('無法載入檔案');
     const data = await response.json();
-    return data.segments || [];
+    return {
+      version: Number(data.version) || 1,
+      segments: data.segments || []
+    };
   } catch (err) {
     console.warn('自動載入預設資料失敗：', err);
     if (window.location.protocol === 'file:') {
       setMsg('⚠️ 無法載入預設資料，請確保使用伺服器環境（如 Live Server）', 5000);
     }
-    return [];
+    return { version: 1, segments: [] };
   }
 }
 
@@ -556,8 +586,9 @@ async function init() {
     try { Object.assign(state, JSON.parse(raw)); } catch (e) {}
   } else {
     const presets = await loadPresetData();
-    if (presets.length > 0) {
-      state.segments = presets.map(s => ({ id: nid(), ...s }));
+    if (presets.segments.length > 0) {
+      state.version = presets.version;
+      state.segments = presets.segments.map(s => ({ id: nid(), ...s }));
       setMsg('✓ 已自動載入預設上河路段庫', 3500);
     }
   }
@@ -568,6 +599,7 @@ async function init() {
   }
   if (!state.dayStarts) state.dayStarts = { 1: '08:00' };
   if (!state.dayGlobalSpeeds) state.dayGlobalSpeeds = {};
+  if (state.version === undefined) state.version = 1;
   if (state.startPoint === undefined) state.startPoint = null;
   if (state.libSearch === undefined) state.libSearch = '';
   if (state.libGroupFilter === undefined) state.libGroupFilter = '';
@@ -801,7 +833,6 @@ function updateDestSelect() {
   updateRouteImage();
 }
 
-/* 更新右側路線圖片 */
 function updateRouteImage() {
   const wrap = $('#routeImageWrap');
   const img = $('#routeImage');
@@ -811,8 +842,15 @@ function updateRouteImage() {
   
   let targetGroup = groupVal;
   
-  if (!targetGroup && destVal) {
-    targetGroup = getLocationGroup(destVal);
+  if (!targetGroup) {
+    if (destVal) {
+      targetGroup = getLocationGroup(destVal);
+    } else {
+      const pos = currentPos() || state.startPoint;
+      if (pos) {
+        targetGroup = getLocationGroup(pos);
+      }
+    }
   }
   
   if (targetGroup && IMAGE_MAP[targetGroup]) {
@@ -826,7 +864,6 @@ function updateRouteImage() {
   }
 }
 
-/* ★ 更新左側路段庫圖片 */
 function updateLibImage(group) {
   const wrap = $('#libImageWrap');
   const img = $('#libImage');
@@ -892,8 +929,21 @@ function setupMagnifier(wrap, targetImg) {
     
     magnifier.style.backgroundPosition = `${bgX}px ${bgY}px`;
     
-    magnifier.style.left = (e.clientX + 15) + 'px';
-    magnifier.style.top = (e.clientY + 15) + 'px';
+    // ★ 修正：智慧判斷顯示位置，避免超出視窗
+    let posX = e.clientX + 15;
+    let posY = e.clientY + 15;
+    
+    // 如果右邊超出視窗，改顯示在滑鼠左邊
+    if (posX + magSize > window.innerWidth) {
+      posX = e.clientX - magSize - 15;
+    }
+    // 如果下面超出視窗，改顯示在滑鼠上面
+    if (posY + magSize > window.innerHeight) {
+      posY = e.clientY - magSize - 15;
+    }
+    
+    magnifier.style.left = posX + 'px';
+    magnifier.style.top = posY + 'px';
   });
 }
 
@@ -1249,6 +1299,7 @@ function commit() {
   renderGroupList();
   updateDestSelect();
   renderPlanAndTime();
+  updateVersionDisplay();
 }
 
 /* ══════════════════════════════════════════
@@ -1301,7 +1352,7 @@ document.addEventListener('click', e => {
   }
 });
 
-/* ★ 路段庫點擊預覽圖片（不連動右側） */
+/* 路段庫點擊預覽圖片（不連動右側） */
 document.addEventListener('click', e => {
   if (e.target.closest('button')) return;
   const libItem = e.target.closest('.lib-item');
@@ -1326,7 +1377,7 @@ function addLocationToPlan(val) {
   if (currentPos() === null && !state.startPoint) {
     state.startPoint = val;
     save();
-    $('#destSearch').value = ''; // ★ 清空搜尋欄
+    $('#destSearch').value = '';
     updateDestSelect();
     setMsg(`已設定起點：${val}`);
     return;
@@ -1355,7 +1406,7 @@ function addLocationToPlan(val) {
     state.plan.splice(insertIdx, 0, ...newItems);
     state.startPoint = null;
     validatePlan();
-    $('#destSearch').value = ''; // ★ 清空搜尋欄
+    $('#destSearch').value = '';
     commit();
     setMsg(`已加入路線至 ${val}`);
   } else {
@@ -1367,15 +1418,10 @@ $('#addDestBtn').addEventListener('click', () => {
   addLocationToPlan($('#destSelect').value);
 });
 
-// ★ 快速加入 Icon 的事件綁定
 $('#nextStepsContainer').addEventListener('click', (e) => {
   const chip = e.target.closest('.step-chip');
   if (chip) {
     const val = chip.dataset.val;
-    const grp = getLocationGroup(val);
-    if (grp) {
-      $('#destGroup').value = grp;
-    }
     addLocationToPlan(val);
   }
 });
@@ -1471,7 +1517,6 @@ document.addEventListener('input', e => {
     return;
   }
 
-  // ★ 目的地搜尋：input 事件即時刷新
   if (e.target.id === 'destSearch') {
     updateDestSelect();
     return;
@@ -1555,7 +1600,6 @@ document.addEventListener('change', e => {
     updateDestSelect();
   }
 
-  // ★ 保留 destSearch 的 change 監聽，作為 autocomplete/自動填充的保險
   if (t.id === 'destSearch' || t.id === 'destGroup' || t.id === 'nextSpeed') {
     updateDestSelect();
   }
@@ -1690,7 +1734,7 @@ $('#nextSpeed').addEventListener('input', (e) => {
 });
 
 /* ══════════════════════════════════════════
-   ★ 載入預設上河資料按鈕
+   載入預設上河資料按鈕
    ══════════════════════════════════════════ */
 $('#loadPresetSeg').addEventListener('click', async () => {
   if (state.segments.length > 0) {
@@ -1700,12 +1744,13 @@ $('#loadPresetSeg').addEventListener('click', async () => {
   }
   
   const presets = await loadPresetData();
-  if (presets.length === 0) {
+  if (presets.segments.length === 0) {
     setMsg('無法載入預設資料，請確認 hiking-segments.json 存在', 3500);
     return;
   }
   
-  state.segments = presets.map(s => ({ id: nid(), ...s }));
+  state.version = presets.version;
+  state.segments = presets.segments.map(s => ({ id: nid(), ...s }));
   state.plan = [];
   state.startPoint = null;
   state.activeDay = 1;
@@ -1718,18 +1763,18 @@ $('#loadPresetSeg').addEventListener('click', async () => {
 
   resetSegForm();
   commit();
-  showLibMsg(`✓ 已載入預設上河資料（共 ${state.segments.length} 筆路段）`);
+  showLibMsg(`✓ 已載入預設上河資料（v${state.version}，共 ${state.segments.length} 筆路段）`);
 });
 
 /* ══════════════════════════════════════════
-   新的行程
+   新的行程（保留路段庫）
    ══════════════════════════════════════════ */
 $('#newTrip').addEventListener('click', () => {
   const btn = $('#newTrip');
 
   if (!newTripPending) {
     newTripPending = true;
-    btn.textContent = '⚠ 再點一次清除全部';
+    btn.textContent = '⚠ 再點一次清除全部行程';
     btn.style.background = '#fbe9e7';
     btn.style.color = '#d9534f';
     clearTimeout(newTripTimer);
@@ -1748,37 +1793,24 @@ $('#newTrip').addEventListener('click', () => {
   btn.style.background = '';
   btn.style.color = '';
 
-  state.segments   = [];
   state.plan       = [];
   state.startPoint = null;
   state.dayStarts  = { 1: '08:00' };
   state.dayGlobalSpeeds = {};
   state.speed      = 1;
-  state.libSearch  = '';
-  state.libGroupFilter = '';
-  state.libMatchCase = false;
-  state.libMatchWholeWord = false;
+  state.activeDay  = 1;
   state.destMatchCase = false;
   state.destMatchWholeWord = false;
-  state.activeDay  = 1;
-  collapsedGroups.clear();
-
-  try { localStorage.removeItem(KEY); } catch (e) {}
-  try { sessionStorage.removeItem(KEY); } catch (e) {}
 
   resetSegForm();
   $('#nextSpeed').value = 1;
-  $('#libSearch').value = '';
-  $('#libGroupFilter').value = '';
-  $('#libMatchCase').checked = false;
-  $('#libMatchWholeWord').checked = false;
-  $('#destMatchCase').checked = false;
-  $('#destMatchWholeWord').checked = false;
   $('#destGroup').value = '';
   $('#destSearch').value = '';
+  $('#destMatchCase').checked = false;
+  $('#destMatchWholeWord').checked = false;
 
   commit();
-  setMsg('✓ 已清除所有資料，回到初始狀態');
+  setMsg('✓ 已清除行程資料，路段庫已保留');
 });
 
 /* ══════════════════════════════════════════
@@ -1786,7 +1818,8 @@ $('#newTrip').addEventListener('click', () => {
    ══════════════════════════════════════════ */
 $('#dlSeg').addEventListener('click', () => {
   const data = {
-    type: 'hiking-segments', version: 1,
+    type: 'hiking-segments',
+    version: state.version,
     segments: state.segments.map(s => ({ group: s.group || '', from: s.from, to: s.to, go: s.go, back: s.back }))
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1800,13 +1833,15 @@ $('#dlSeg').addEventListener('click', () => {
 function parseSegmentJSON(text) {
   const obj = JSON.parse(text);
   const arr = Array.isArray(obj) ? obj : (obj.segments || []);
-  return arr.map(s => ({
+  const version = Number(obj.version) || 1;
+  const segments = arr.map(s => ({
     group: String(s.group || s['分類'] || '').trim(),
     from: String(s.from || s['起點'] || '').trim(),
     to:   String(s.to   || s['終點'] || '').trim(),
     go:   Number(s.go   ?? s.up   ?? s['去程'] ?? 0),
     back: Number(s.back ?? s.down ?? s['回程'] ?? s.go ?? s.up ?? 0)
   })).filter(s => s.from && s.to && s.go > 0);
+  return { version, segments };
 }
 function parseSegmentCSV(text) {
   const rows = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
@@ -1830,8 +1865,16 @@ $('#fileSeg').addEventListener('change', e => {
   reader.onload = () => {
     try {
       const text = String(reader.result);
-      const segs = /\.csv$/i.test(f.name) ? parseSegmentCSV(text) : parseSegmentJSON(text);
+      let segs, fileVersion = 1;
+      if (/\.csv$/i.test(f.name)) {
+        segs = parseSegmentCSV(text);
+      } else {
+        const parsed = parseSegmentJSON(text);
+        segs = parsed.segments;
+        fileVersion = parsed.version;
+      }
       if (!segs.length) throw new Error('檔案中沒有有效的路段');
+      state.version = fileVersion;
       state.segments = segs.map(s => ({ id: nid(), group: s.group, from: s.from, to: s.to, go: s.go, back: s.back }));
       state.plan = [];
       state.startPoint = null;
@@ -1843,7 +1886,7 @@ $('#fileSeg').addEventListener('change', e => {
       collapsedGroups.clear();
       resetSegForm();
       commit();
-      showLibMsg(`已載入 ${state.segments.length} 筆路段`);
+      showLibMsg(`已載入 v${state.version} · ${state.segments.length} 筆路段`);
     } catch (err) {
       showLibMsg('載入失敗：' + err.message);
     }
@@ -2032,7 +2075,6 @@ $('#importFileInput').addEventListener('change', e => {
         importFromJSON(text);
       }
       
-      // 共用更新
       $('#nextSpeed').value = state.speed;
       $('#libSearch').value = '';
       $('#libGroupFilter').value = '';
