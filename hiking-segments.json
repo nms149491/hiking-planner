@@ -1,6 +1,6 @@
 {
   "type": "hiking-segments",
-  "version": 1.3,
+  "version": 1.4,
   "segments": [
     {
       "group": "玉山群峰",
@@ -5811,13 +5811,6 @@
       "to": "關山嶺山",
       "go": 105,
       "back": 80
-    },
-    {
-      "group": "南一段",
-      "from": "關山嶺山",
-      "to": "埡口山莊",
-      "go": 80,
-      "back": 105
     },
     {
       "group": "南一段",
