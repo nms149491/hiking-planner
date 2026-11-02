@@ -1,6 +1,6 @@
 {
   "type": "hiking-segments",
-  "version": 1.4,
+  "version": 1.5,
   "segments": [
     {
       "group": "玉山群峰",
@@ -5356,13 +5356,6 @@
       "to": "向陽山",
       "go": 35,
       "back": 25
-    },
-    {
-      "group": "新康橫斷",
-      "from": "向陽山",
-      "to": "三叉山",
-      "go": 45,
-      "back": 60
     },
     {
       "group": "新康橫斷",
